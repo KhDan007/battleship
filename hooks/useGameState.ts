@@ -10,6 +10,7 @@ import {
   placeShipOnGrid,
   createShip,
   processShot,
+  switchTurn,
   getRemainingShips,
 } from "../lib/gameLogic";
 import { saveGameState, loadGameState, clearGameState } from "../lib/storage";
@@ -20,6 +21,8 @@ export function useGameState() {
   const [placementShip, setPlacementShip] = useState<string | null>(null);
   const [isHorizontal, setIsHorizontal] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [shotResult, setShotResult] = useState<"hit" | "miss" | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -41,6 +44,8 @@ export function useGameState() {
     clearGameState();
     setGameState(createInitialGameState());
     setPlacementShip(null);
+    setIsProcessing(false);
+    setShotResult(null);
   }, []);
 
   const toggleOrientation = useCallback(() => {
@@ -114,12 +119,40 @@ export function useGameState() {
 
   const handleShot = useCallback(
     (row: number, col: number) => {
-      if (!gameState || gameState.phase !== "battle") return;
+      if (!gameState || gameState.phase !== "battle" || isProcessing) return;
+
       const targetId = gameState.currentPlayer === 1 ? 2 : 1;
-      const newState = processShot(gameState, targetId, row, col);
-      setGameState(newState);
+      const result = processShot(gameState, targetId, row, col);
+
+      if (result.gameOver) {
+        setGameState(result.newState);
+        return;
+      }
+
+      const hit = result.hit;
+      setShotResult(hit ? "hit" : "miss");
+      setIsProcessing(true);
+
+      setGameState(result.newState);
+
+      if (hit) {
+        setTimeout(() => {
+          setIsProcessing(false);
+          setShotResult(null);
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          setGameState((prev) => {
+            if (!prev) return prev;
+            const switched = switchTurn(prev);
+            return switched;
+          });
+          setIsProcessing(false);
+          setShotResult(null);
+        }, 2000);
+      }
     },
-    [gameState]
+    [gameState, isProcessing]
   );
 
   const getPlacedShipsCount = useCallback(
@@ -158,5 +191,7 @@ export function useGameState() {
     getPlacedShipsCount,
     getRemainingShipsCount,
     mounted,
+    isProcessing,
+    shotResult,
   };
 }

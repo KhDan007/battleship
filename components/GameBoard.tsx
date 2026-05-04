@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { CellState } from "../lib/types";
 import { BOARD_SIZE as SIZE } from "../lib/constants";
+import { canPlaceShip } from "../lib/gameLogic";
 import Cell from "./Cell";
 
 interface GameBoardProps {
@@ -34,20 +35,22 @@ const GameBoard: React.FC<GameBoardProps> = ({
     if (isHorizontal) {
       if (col + selectedShipSize > SIZE) return new Set();
       for (let i = 0; i < selectedShipSize; i++) {
-        if (grid[row][col + i] !== "empty") return new Set();
         cells.add(`${row}-${col + i}`);
       }
     } else {
       if (row + selectedShipSize > SIZE) return new Set();
       for (let i = 0; i < selectedShipSize; i++) {
-        if (grid[row + i][col] !== "empty") return new Set();
         cells.add(`${row + i}-${col}`);
       }
     }
     return cells;
-  }, [hoverPos, selectedShipSize, isHorizontal, grid]);
+  }, [hoverPos, selectedShipSize, isHorizontal]);
 
-  const isValidPlacement = previewCells.size > 0;
+  const isValidPlacement = useMemo(() => {
+    if (!hoverPos || !selectedShipSize) return false;
+    const [row, col] = hoverPos;
+    return canPlaceShip(grid, selectedShipSize, row, col, !!isHorizontal);
+  }, [hoverPos, selectedShipSize, isHorizontal, grid]);
 
   const handleClick = (row: number, col: number) => {
     if (selectedShipSize && hoverPos) {
@@ -55,6 +58,12 @@ const GameBoard: React.FC<GameBoardProps> = ({
     } else if (!selectedShipSize) {
       onCellClick(row, col);
     }
+  };
+
+  const isCellInteractive = (row: number, col: number) => {
+    if (!isInteractive) return false;
+    const cellState = grid[row][col];
+    return cellState !== "hit" && cellState !== "miss" && cellState !== "sunk";
   };
 
   return (
@@ -69,57 +78,56 @@ const GameBoard: React.FC<GameBoardProps> = ({
           </p>
         </div>
       </div>
-      <div className="inline-block bg-slate-900 p-2 rounded-lg shadow-inner border border-slate-700">
-        <div className="grid grid-cols-11 gap-[2px]">
-          <div className="w-8 h-8" />
-          {Array(SIZE)
-            .fill(0)
-            .map((_, i) => (
-              <div
-                key={`col-${i}`}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-bold"
-              >
-                {columns[i]}
-              </div>
-            ))}
-          {Array(SIZE)
-            .fill(0)
-            .map((_, row) => (
-              <React.Fragment key={`row-${row}`}>
-                <div className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-bold">
-                  {row + 1}
+      <div className="flex justify-center">
+        <div className="inline-block bg-slate-900 p-3 rounded-lg shadow-inner border border-slate-700">
+          <div className="grid grid-cols-11 gap-[3px]">
+            <div className="w-8 h-8" />
+            {Array(SIZE)
+              .fill(0)
+              .map((_, i) => (
+                <div
+                  key={`col-${i}`}
+                  className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-bold"
+                >
+                  {columns[i]}
                 </div>
-                {Array(SIZE)
-                  .fill(0)
-                  .map((_, col) => {
-                    const previewKey = `${row}-${col}`;
-                    const isPreview = previewCells.has(previewKey);
-                    const showPreview = isPreview && selectedShipSize !== undefined;
+              ))}
+            {Array(SIZE)
+              .fill(0)
+              .map((_, row) => (
+                <React.Fragment key={`row-${row}`}>
+                  <div className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-bold">
+                    {row + 1}
+                  </div>
+                  {Array(SIZE)
+                    .fill(0)
+                    .map((_, col) => {
+                      const previewKey = `${row}-${col}`;
+                      const isPreview = previewCells.has(previewKey);
+                      const showPreview = isPreview && selectedShipSize !== undefined;
 
-                    return (
-                      <Cell
-                        key={previewKey}
-                        state={showPreview ? "empty" : grid[row][col]}
-                        onClick={() => handleClick(row, col)}
-                        onMouseEnter={
-                          selectedShipSize
-                            ? () => setHoverPos([row, col])
-                            : undefined
-                        }
-                        onMouseLeave={() => setHoverPos(null)}
-                        isInteractive={
-                          isInteractive &&
-                          !showPreview &&
-                          grid[row][col] === "empty"
-                        }
-                        isOpponentView={isOpponentView}
-                        isPreview={showPreview}
-                        isPreviewValid={isValidPlacement}
-                      />
-                    );
-                  })}
-              </React.Fragment>
-            ))}
+                      return (
+                        <Cell
+                          key={previewKey}
+                          state={showPreview ? "empty" : grid[row][col]}
+                          onClick={() => handleClick(row, col)}
+                          onMouseEnter={
+                            selectedShipSize
+                              ? () => setHoverPos([row, col])
+                              : undefined
+                          }
+                          onMouseLeave={() => setHoverPos(null)}
+                          isInteractive={isCellInteractive(row, col)}
+                          isOpponentView={isOpponentView}
+                          isPreview={showPreview}
+                          isPreviewValid={isValidPlacement}
+                          isBattle={isInteractive && !selectedShipSize}
+                        />
+                      );
+                    })}
+                </React.Fragment>
+              ))}
+          </div>
         </div>
       </div>
     </div>

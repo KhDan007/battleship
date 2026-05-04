@@ -11,9 +11,6 @@
   --accent-yellow: #f59e0b;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --board-bg: #1e3a5f;
-  --cell-empty: #2563eb;
-  --cell-hover: #60a5fa;
 }
 
 body {
@@ -24,6 +21,12 @@ body {
 }
 
 @layer components {
+  button {
+    appearance: none;
+    background: none;
+    border: none;
+  }
+
   .btn-primary {
     @apply px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold
            hover:bg-blue-500 transition-colors duration-200
@@ -53,7 +56,7 @@ body {
   }
 
   .board-cell-empty {
-    @apply bg-blue-600 hover:bg-blue-500;
+    @apply bg-blue-600;
   }
 
   .board-cell-ship {
@@ -61,11 +64,13 @@ body {
   }
 
   .board-cell-hit {
-    @apply bg-red-500 animate-pulse-hit;
+    @apply bg-red-500;
+    animation: pulse-hit 0.6s ease-in-out;
   }
 
   .board-cell-miss {
-    @apply bg-blue-300 animate-ripple;
+    @apply bg-blue-300;
+    animation: miss-fade 2s ease-in-out;
   }
 
   .board-cell-sunk {
@@ -80,8 +85,34 @@ body {
     @apply bg-red-500/50 border-red-400;
   }
 
-  .ship-preview {
-    @apply bg-blue-400/40 border-blue-300/60 animate-blink;
+  .board-cell-battle {
+    @apply cursor-pointer;
+  }
+
+  .board-cell-battle-hovered {
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.7) !important;
+    background-color: rgba(250, 204, 21, 0.2) !important;
+    z-index: 10 !important;
+    outline: 2px solid rgba(250, 204, 21, 0.8) !important;
+    outline-offset: -1px !important;
+  }
+
+  .preview-valid {
+    animation: pulse-preview 1.2s ease-in-out infinite !important;
+  }
+
+  .preview-invalid {
+    animation: pulse-preview 1.2s ease-in-out infinite !important;
+  }
+
+  .preview-valid:hover, .preview-invalid:hover {
+    transform: scale(1.15) !important;
+    box-shadow: 0 0 16px rgba(250, 204, 21, 0.8) !important;
+    background-color: rgba(250, 204, 21, 0.25) !important;
+    z-index: 20 !important;
+    outline: 2px solid rgba(250, 204, 21, 0.9) !important;
+    outline-offset: -1px !important;
   }
 }
 
@@ -96,18 +127,33 @@ body {
   }
 }
 
-@keyframes ripple {
+@keyframes miss-fade {
   0% {
-    box-shadow: 0 0 0 0 rgba(147, 197, 253, 0.7);
+    background-color: #60a5fa;
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.6);
+  }
+  50% {
+    background-color: #93c5fd;
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(147, 197, 253, 0.3);
   }
   100% {
-    box-shadow: 0 0 0 8px rgba(147, 197, 253, 0);
+    background-color: #bfdbfe;
+    transform: scale(1);
+    box-shadow: none;
   }
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+@keyframes pulse-preview {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
 }
 
 @keyframes explode {
@@ -121,24 +167,19 @@ body {
   to { transform: translateY(0); opacity: 1; }
 }
 
-.animate-pulse-hit {
-  animation: pulse-hit 0.6s ease-in-out;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-ripple {
-  animation: ripple 0.8s ease-out;
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
-.animate-blink {
-  animation: blink 1s ease-in-out infinite;
-}
-
-.animate-explode {
-  animation: explode 0.4s ease-out;
-}
-
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+@keyframes scale-in {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .hit-text {
@@ -146,5 +187,5 @@ body {
 }
 
 .miss-text {
-  animation: ripple 0.8s ease-out;
+  animation: miss-fade 2s ease-in-out;
 }

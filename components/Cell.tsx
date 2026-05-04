@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { CellState } from "../lib/types";
 
 interface CellProps {
@@ -10,6 +10,7 @@ interface CellProps {
   isOpponentView: boolean;
   isPreview?: boolean;
   isPreviewValid?: boolean;
+  isBattle?: boolean;
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -21,12 +22,16 @@ const Cell: React.FC<CellProps> = ({
   isOpponentView,
   isPreview = false,
   isPreviewValid = true,
+  isBattle = false,
 }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
   const getClassName = () => {
     if (isPreview) {
-      return isPreviewValid
-        ? "board-cell board-cell-valid ship-preview cursor-pointer"
-        : "board-cell board-cell-invalid ship-preview cursor-not-allowed";
+      const base = isPreviewValid
+        ? "board-cell board-cell-valid preview-valid cursor-pointer"
+        : "board-cell board-cell-invalid preview-invalid cursor-not-allowed";
+      return base;
     }
 
     let base = "board-cell ";
@@ -46,6 +51,14 @@ const Cell: React.FC<CellProps> = ({
       default:
         base += isInteractive ? "board-cell-empty cursor-pointer" : "bg-blue-600 ";
     }
+
+    if (isBattle && isInteractive) {
+      base += "board-cell-battle ";
+      if (isHovered) {
+        base += "board-cell-battle-hovered ";
+      }
+    }
+
     return base;
   };
 
@@ -64,11 +77,21 @@ const Cell: React.FC<CellProps> = ({
     }
   };
 
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    onMouseEnter?.();
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    onMouseLeave?.();
+  };
+
   return (
     <button
       onClick={onClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       disabled={!isInteractive && !isPreview}
       className={getClassName()}
       aria-label={`Cell ${state}`}

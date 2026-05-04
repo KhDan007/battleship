@@ -45,15 +45,31 @@ export function canPlaceShip(
 ): boolean {
   if (isHorizontal) {
     if (col + shipSize > SIZE) return false;
-    for (let i = 0; i < shipSize; i++) {
-      if (grid[row][col + i] !== "empty") return false;
-    }
   } else {
     if (row + shipSize > SIZE) return false;
-    for (let i = 0; i < shipSize; i++) {
-      if (grid[row + i][col] !== "empty") return false;
+  }
+
+  const directions = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [0, -1],           [0, 1],
+    [1, -1],  [1, 0],  [1, 1]
+  ];
+
+  for (let i = 0; i < shipSize; i++) {
+    const r = isHorizontal ? row : row + i;
+    const c = isHorizontal ? col + i : col;
+
+    if (grid[r][c] !== "empty") return false;
+
+    for (const [dr, dc] of directions) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+        if (grid[nr][nc] === "ship") return false;
+      }
     }
   }
+
   return true;
 }
 
@@ -101,7 +117,7 @@ export function processShot(
   targetPlayerId: 1 | 2,
   row: number,
   col: number
-): GameState {
+): { newState: GameState; hit: boolean; gameOver: boolean } {
   const newState = JSON.parse(JSON.stringify(gameState));
   const attackerId = gameState.currentPlayer;
   const attacker =
@@ -112,12 +128,14 @@ export function processShot(
       : newState.players.player2;
 
   if (attacker.shots.some(([r, c]: [number, number]) => r === row && c === col)) {
-    return gameState;
+    return { newState: gameState, hit: false, gameOver: false };
   }
 
   attacker.shots.push([row, col]);
+  let hit = false;
 
   if (target.grid[row][col] === "ship") {
+    hit = true;
     target.grid[row][col] = "hit";
     const hitShip = target.ships.find((ship: Ship) =>
       ship.positions.some(([r, c]: [number, number]) => r === row && c === col)
@@ -135,14 +153,19 @@ export function processShot(
     if (checkWin(target)) {
       newState.phase = "gameover";
       newState.winner = attackerId;
-      return newState;
+      return { newState, hit, gameOver: true };
     }
-    return newState;
+    return { newState, hit, gameOver: false };
   } else {
     target.grid[row][col] = "miss";
-    newState.currentPlayer = targetPlayerId;
-    return newState;
+    return { newState, hit, gameOver: false };
   }
+}
+
+export function switchTurn(gameState: GameState): GameState {
+  const newState = JSON.parse(JSON.stringify(gameState));
+  newState.currentPlayer = newState.currentPlayer === 1 ? 2 : 1;
+  return newState;
 }
 
 export function checkWin(player: Player): boolean {
