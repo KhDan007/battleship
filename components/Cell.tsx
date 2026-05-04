@@ -4,43 +4,61 @@ import { CellState } from "../lib/types";
 interface CellProps {
   state: CellState;
   onClick: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
   isInteractive: boolean;
   isOpponentView: boolean;
+  isPreview?: boolean;
+  isPreviewValid?: boolean;
 }
 
 const Cell: React.FC<CellProps> = ({
   state,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
   isInteractive,
   isOpponentView,
+  isPreview = false,
+  isPreviewValid = true,
 }) => {
-  const getBgColor = () => {
-    if (isOpponentView && state === "ship") {
-      return "bg-blue-500";
+  const getClassName = () => {
+    if (isPreview) {
+      return isPreviewValid
+        ? "board-cell board-cell-valid ship-preview cursor-pointer"
+        : "board-cell board-cell-invalid ship-preview cursor-not-allowed";
     }
+
+    let base = "board-cell ";
     switch (state) {
       case "ship":
-        return "bg-gray-600";
+        base += isOpponentView ? "bg-blue-600 " : "board-cell-ship ";
+        break;
       case "hit":
-        return "bg-red-500";
+        base += "board-cell-hit ";
+        break;
       case "miss":
-        return "bg-blue-200";
+        base += "board-cell-miss ";
+        break;
       case "sunk":
-        return "bg-red-800";
+        base += "board-cell-sunk ";
+        break;
       default:
-        return "bg-blue-500 hover:bg-blue-400";
+        base += isInteractive ? "board-cell-empty cursor-pointer" : "bg-blue-600 ";
     }
+    return base;
   };
 
   const getContent = () => {
+    if (isPreview) return "";
     if (isOpponentView && state === "ship") return "";
     switch (state) {
       case "hit":
-        return "💥";
+        return <span className="hit-text text-white text-lg">💥</span>;
       case "miss":
-        return "•";
+        return <span className="miss-text text-blue-800 text-lg">●</span>;
       case "sunk":
-        return "🔥";
+        return <span className="hit-text text-white text-lg">🔥</span>;
       default:
         return "";
     }
@@ -49,16 +67,10 @@ const Cell: React.FC<CellProps> = ({
   return (
     <button
       onClick={onClick}
-      disabled={!isInteractive}
-      className={`
-        w-full aspect-square border border-blue-700
-        flex items-center justify-center
-        text-sm sm:text-base font-bold
-        transition-colors duration-150
-        ${getBgColor()}
-        ${isInteractive ? "cursor-pointer" : "cursor-default"}
-        ${!isInteractive && state === "empty" ? "bg-blue-500" : ""}
-      `}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      disabled={!isInteractive && !isPreview}
+      className={getClassName()}
       aria-label={`Cell ${state}`}
     >
       {getContent()}
