@@ -35,6 +35,27 @@ function isShot(row: number, col: number, shots: [number, number][]): boolean {
   return shots.some(([sr, sc]) => sr === row && sc === col);
 }
 
+// Helper: Get all cells adjacent (8 directions) to sunk ships - guaranteed empty
+function getSunkAdjacentCells(grid: GridState): Set<string> {
+  const sunkAdjacent = new Set<string>();
+  const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      if (grid[r][c] === "sunk") {
+        for (const [dr, dc] of dirs) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+            sunkAdjacent.add(`${nr},${nc}`);
+          }
+        }
+      }
+    }
+  }
+  return sunkAdjacent;
+}
+
 // Helper: Get unsunk hit cells from grid
 function getUnsunkHitCells(
   grid: GridState,
@@ -60,11 +81,12 @@ function getUnsunkHitCells(
   return hits;
 }
 
-// Helper: Get orthogonal adjacent cells (up/down/left/right) that are unshot
+// Helper: Get orthogonal adjacent cells (up/down/left/right) that are unshot and not adjacent to sunk
 function getOrthogonalAdjacent(
   row: number,
   col: number,
-  shots: [number, number][]
+  shots: [number, number][],
+  sunkAdjacent: Set<string>
 ): [number, number][] {
   const dirs = [[-1,0], [1,0], [0,-1], [0,1]];
   const result: [number, number][] = [];
@@ -73,7 +95,8 @@ function getOrthogonalAdjacent(
     const nc = col + dc;
     if (
       nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE &&
-      !isShot(nr, nc, shots)
+      !isShot(nr, nc, shots) &&
+      !sunkAdjacent.has(`${nr},${nc}`)
     ) {
       result.push([nr, nc]);
     }
@@ -114,24 +137,19 @@ function groupHitsIntoClusters(hits: [number, number][]): [number, number][][] {
   return clusters;
 }
 
-// Helper: Filter out cells diagonal to any hit/sunk (guaranteed empty)
-function filterDiagonalEmpty(
-  cells: [number, number][],
-  grid: GridState
-): [number, number][] {
-  const dirs = [[-1,-1], [-1,1], [1,-1], [1,1]];
-  return cells.filter(([r, c]) => {
-    for (const [dr, dc] of dirs) {
-      const nr = r + dr;
-      const nc = c + dc;
-      if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
-        if (grid[nr][nc] === "hit" || grid[nr][nc] === "sunk") {
-          return false;
-        }
+// Helper: Check if cell is adjacent (8 dirs) to any sunk ship
+function isAdjacentToSunk(row: number, col: number, grid: GridState): boolean {
+  const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  for (const [dr, dc] of dirs) {
+    const nr = row + dr;
+    const nc = col + dc;
+    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+      if (grid[nr][nc] === "sunk") {
+        return true;
       }
     }
-    return true;
-  });
+  }
+  return false;
 }
 
 // Easy Bot: Random shots, 30% chance to shoot diagonal-adjacent to hits (empty cells)
@@ -140,6 +158,7 @@ function getEasyShot(
   shots: [number, number][],
   ships: Ship[]
 ): BotShotResult {
+  const sunkAdjacent = getSunkAdjacentCells(grid);
   const badShots: [number, number][] = [];
   const allShots: [number, number][] = [];
 
@@ -147,8 +166,11 @@ function getEasyShot(
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
       if (!isShot(r, c, shots)) {
+        // Skip cells adjacent to sunk ships (guaranteed empty)
+        if (sunkAdjacent.has(`${r},${c}`)) continue;
+
         allShots.push([r, c]);
-        // Check if diagonal to any hit/sunk cell (guaranteed empty)
+        // Check if diagonal to any hit cell (guaranteed empty)
         const dirs = [[-1,-1], [-1,1], [1,-1], [1,1]];
         for (const [dr, dc] of dirs) {
           const nr = r + dr;
@@ -180,20 +202,25 @@ function getMediumShot(
   shots: [number, number][],
   ships: Ship[]
 ): BotShotResult {
+  const sunkAdjacent = getSunkAdjacentCells(grid);
   const unsunkHits = getUnsunkHitCells(grid, shots, ships);
 
   if (unsunkHits.length > 0) {
-    // Get all orthogonal adjacent cells to unsunk hits, unshot
+    // Get all orthogonal adjacent cells to unsunk hits, unshot, not adjacent to sunk
     const targetCells: [number, number][] = [];
     for (const [r, c] of unsunkHits) {
-      const adj = getOrthogonalAdjacent(r, c, shots);
+      const adj = getOrthogonalAdjacent(r, c, shots, sunkAdjacent);
       targetCells.push(...adj);
     }
 
-    // Remove duplicates and cells that are diagonal to any hit/sunk (guaranteed empty)
+    // Remove duplicates
     const uniqueTargets = Array.from(new Set(targetCells.map(([r,c]) => `${r},${c}`)))
       .map(s => s.split(",").map(Number) as [number, number]);
-    const validTargets = filterDiagonalEmpty(uniqueTargets, grid);
+
+    // Filter out cells adjacent to hit/sunk (diagonal to hit = empty, orthogonal to sunk = empty)
+    const validTargets = uniqueTargets.filter(([r, c]) => {
+      return !isAdjacentToSunk(r, c, grid);
+    });
 
     if (validTargets.length > 0) {
       // Prioritize cells that form a line with existing hits
@@ -207,11 +234,13 @@ function getMediumShot(
     }
   }
 
-  // Fallback: random shots that avoid known empty cells (diagonal to hits, shot cells)
+  // Fallback: random shots that avoid known empty cells
   const validShots: [number, number][] = [];
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
       if (isShot(r, c, shots)) continue;
+      // Skip cells adjacent to sunk ships (guaranteed empty)
+      if (sunkAdjacent.has(`${r},${c}`)) continue;
       // Skip diagonal to hits/sunk
       const dirs = [[-1,-1], [-1,1], [1,-1], [1,1]];
       let skip = false;
@@ -239,6 +268,7 @@ function getHardShot(
   shots: [number, number][],
   ships: Ship[]
 ): BotShotResult {
+  const sunkAdjacent = getSunkAdjacentCells(grid);
   const unsunkHits = getUnsunkHitCells(grid, shots, ships);
 
   // Target mode: if there are unsunk hits, target adjacent cells to sink ships
@@ -258,7 +288,7 @@ function getHardShot(
       // Get target cells based on orientation
       let targetCells: [number, number][] = [];
       if (cluster.length === 1) {
-        targetCells = getOrthogonalAdjacent(cluster[0][0], cluster[0][1], shots);
+        targetCells = getOrthogonalAdjacent(cluster[0][0], cluster[0][1], shots, sunkAdjacent);
       } else {
         // Sort cluster to find ends
         const sorted = isHorizontal
@@ -272,14 +302,18 @@ function getHardShot(
         } else {
           targetCells.push([first[0]-1, first[1]], [last[0]+1, last[1]]);
         }
-        // Filter valid (in bounds, unshot)
+        // Filter valid (in bounds, unshot, not adjacent to sunk)
         targetCells = targetCells.filter(([r,c]) => {
-          return r >= 0 && r < SIZE && c >= 0 && c < SIZE && !isShot(r,c,shots);
+          return r >= 0 && r < SIZE && c >= 0 && c < SIZE &&
+                 !isShot(r,c,shots) &&
+                 !sunkAdjacent.has(`${r},${c}`);
         });
       }
 
-      // Filter out diagonal to hits/sunk (guaranteed empty)
-      const validTargets = filterDiagonalEmpty(targetCells, grid);
+      // Filter out cells adjacent to sunk ships (guaranteed empty)
+      const validTargets = targetCells.filter(([r,c]) => {
+        return !isAdjacentToSunk(r, c, grid);
+      });
 
       if (validTargets.length > 0) {
         return pickRandomCoord(validTargets);
@@ -296,7 +330,7 @@ function getHardShot(
     return getEasyShot(grid, shots, ships);
   }
 
-  const probabilityMap = createProbabilityMap(grid, shots, remainingShips);
+  const probabilityMap = createProbabilityMap(grid, shots, remainingShips, sunkAdjacent);
   let bestScore = -1;
   let bestCells: [number, number][] = [];
 
@@ -319,10 +353,12 @@ function getHardShot(
 }
 
 // Probability map: count valid ship placements per cell
+// Accounts for sunk-adjacent cells being guaranteed empty
 function createProbabilityMap(
   grid: GridState,
   shots: [number, number][],
-  remainingShips: { size: number }[]
+  remainingShips: { size: number }[],
+  sunkAdjacent: Set<string>
 ): number[][] {
   const map = Array(SIZE).fill(0).map(() => Array(SIZE).fill(0));
 
@@ -333,17 +369,43 @@ function createProbabilityMap(
         continue;
       }
 
+      // Skip cells adjacent to sunk ships (guaranteed empty)
+      if (sunkAdjacent.has(`${r},${c}`)) {
+        map[r][c] = 0;
+        continue;
+      }
+
       for (const ship of remainingShips) {
         // Horizontal
         if (canPlaceShip(grid, ship.size, r, c, true)) {
+          // Check if any cell of this placement is adjacent to sunk
+          let valid = true;
           for (let i = 0; i < ship.size; i++) {
-            map[r][c + i]++;
+            if (sunkAdjacent.has(`${r},${c + i}`)) {
+              valid = false;
+              break;
+            }
+          }
+          if (valid) {
+            for (let i = 0; i < ship.size; i++) {
+              map[r][c + i]++;
+            }
           }
         }
         // Vertical
         if (canPlaceShip(grid, ship.size, r, c, false)) {
+          // Check if any cell of this placement is adjacent to sunk
+          let valid = true;
           for (let i = 0; i < ship.size; i++) {
-            map[r + i][c]++;
+            if (sunkAdjacent.has(`${r + i},${c}`)) {
+              valid = false;
+              break;
+            }
+          }
+          if (valid) {
+            for (let i = 0; i < ship.size; i++) {
+              map[r + i][c]++;
+            }
           }
         }
       }
