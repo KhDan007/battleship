@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { SHIP_DEFINITIONS } from "../lib/constants";
 import { Ship } from "../lib/types";
@@ -6,6 +8,7 @@ interface ShipPlacementProps {
   placedShips: Ship[];
   selectedShip: string | null;
   onSelectShip: (shipId: string | null) => void;
+  onRemoveShip?: (shipId: string) => void;
   isHorizontal: boolean;
   onToggleOrientation: () => void;
   playerName: string;
@@ -19,6 +22,7 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
   placedShips,
   selectedShip,
   onSelectShip,
+  onRemoveShip,
   isHorizontal,
   onToggleOrientation,
   playerName,
@@ -56,12 +60,11 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
         {SHIP_DEFINITIONS.map((def) => {
           const isPlaced = placedShipIds.includes(def.id);
           return (
-            <button
+            <div
               key={def.id}
               onClick={() =>
                 !isPlaced && onSelectShip(isPlaced ? null : def.id)
               }
-              disabled={isPlaced}
               className={`
                 w-full p-3 rounded-lg border-2 transition-all duration-200 text-left
                 ${selectedShip === def.id
@@ -69,7 +72,7 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
                   : "border-slate-700 bg-slate-800/50"
                 }
                 ${isPlaced
-                  ? "opacity-50 cursor-not-allowed"
+                  ? "opacity-50"
                   : "hover:border-slate-500 cursor-pointer hover:bg-slate-800"
                 }
               `}
@@ -96,13 +99,25 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
               </div>
               {isPlaced && (
                 <div className="mt-1 flex items-center gap-1">
+                  {onRemoveShip && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveShip(def.id);
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors font-bold"
+                      aria-label={`Remove ${def.name}`}
+                    >
+                      ×
+                    </button>
+                  )}
                   <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
                   </svg>
                   <span className="text-xs text-emerald-500 font-medium">Placed</span>
                 </div>
               )}
-            </button>
+            </div>
           );
         })}
       </div>

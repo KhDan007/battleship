@@ -34,15 +34,16 @@ npx convex dev       # Start Convex backend (needed for full functionality)
 All game state is managed through `hooks/useGameState.ts` which handles:
 - Ship placement phase (setup)
 - Battle phase with turn switching
-- Bot AI integration for PvBot mode
+- Bot AI integration for PvBot mode (bot is internally represented as player 2)
 - Game persistence via localStorage (`lib/storage.ts`)
 - Convex backend sync for authenticated users (game history, stats)
+- Bot turns are managed reactively via a `pendingAction` state and `useEffect` to avoid setTimeout chain issues
 
 ### Game Flow
 
 1. **Mode Selection** (`components/GameModeSelector.tsx`): Choose PvP or PvBot with difficulty
 2. **Setup Phase**: Players place 5 ships (Carrier:5, Battleship:4, Cruiser:3, Submarine:3, Destroyer:2) on 10x10 grid
-3. **Battle Phase**: Players take turns shooting at opponent's grid
+3. **Battle Phase**: In PvP, players alternate turns shooting. In PvBot, Player 1 shoots, then the bot (player 2) automatically takes its turn.
 4. **Game Over**: When all ships of one player are sunk
 
 ### Key Types (`lib/types.ts`)
@@ -71,6 +72,7 @@ Implements three difficulty levels with different targeting strategies. Bot shot
 - All components are client-side ("use client" directive) since game requires browser APIs
 - Game state persistence: localStorage for guests, Convex for authenticated users
 - Press "R" key during ship placement to rotate orientation
-- Bot thinking is simulated with setTimeout delays (1-2 seconds)
+- Bot thinking is simulated with setTimeout delays (1-2 seconds), managed via a reactive useEffect hook
 - `SHIP_DEFINITIONS` in `lib/constants.ts` drives ship configuration
 - Board size is 10x10 (defined in `lib/constants.ts` as `BOARD_SIZE`)
+- In PvBot mode, the bot is internally represented as player 2; the UI shows "Bot" instead of "Player 2"

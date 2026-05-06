@@ -5,17 +5,36 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 
+type GameType = "all" | "pvp" | "pvbot-easy" | "pvbot-medium" | "pvbot-hard";
+
+type GameFromDb = {
+  _id: Id<"games">;
+  _creationTime: number;
+  player1Id: Id<"users">;
+  player2Id?: Id<"users">;
+  player2IsBot: boolean;
+  botDifficulty?: string;
+  winnerId?: Id<"users">;
+  shotsPlayer1: number;
+  shotsPlayer2: number;
+  hitsPlayer1: number;
+  hitsPlayer2: number;
+  durationSeconds?: number;
+};
+
 interface StatisticsDashboardProps {
   userId: string;
 }
 
 const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => {
   const stats = useQuery(api.stats.get, { userId: userId as Id<"users"> });
-  const [loading, setLoading] = useState(!stats);
+  const games = useQuery(api.games.listByUser, { userId: userId as Id<"users"> });
+  const [loading, setLoading] = useState(!stats && !games);
+  const [activeType, setActiveType] = useState<GameType>("all");
 
   useEffect(() => {
-    if (stats !== undefined) setLoading(false);
-  }, [stats]);
+    if (stats !== undefined && games !== undefined) setLoading(false);
+  }, [stats, games]);
 
   if (loading) {
     return (
@@ -38,18 +57,47 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
     );
   }
 
-  const gamesPlayed = stats.gamesPlayed;
-  const gamesWon = stats.gamesWon;
-  const totalShots = stats.totalShots;
-  const totalHits = stats.totalHits;
+  const computeStats = (gameList: GameFromDb[]) => {
+    const filtered =
+      activeType === "all"
+        ? gameList
+        : activeType === "pvp"
+        ? gameList.filter((g) => !g.player2IsBot)
+        : gameList.filter(
+            (g) =>
+              g.player2IsBot &&
+              g.botDifficulty === activeType.replace("pvbot-", "")
+          );
 
-  const winRate = gamesPlayed > 0
-    ? Math.round((gamesWon / gamesPlayed) * 100)
-    : 0;
+    const gamesPlayed = filtered.length;
+    const gamesWon = filtered.filter(
+      (g) => g.winnerId === userId
+    ).length;
+    const totalShots = filtered.reduce(
+      (sum, g) => sum + (g.shotsPlayer1 || 0),
+      0
+    );
+    const totalHits = filtered.reduce(
+      (sum, g) => sum + (g.hitsPlayer1 || 0),
+      0
+    );
+    const winRate =
+      gamesPlayed > 0 ? Math.round((gamesWon / gamesPlayed) * 100) : 0;
+    const accuracy =
+      totalShots > 0 ? Math.round((totalHits / totalShots) * 100) : 0;
 
-  const accuracy = totalShots > 0
-    ? Math.round((totalHits / totalShots) * 100)
-    : 0;
+    return { gamesPlayed, gamesWon, winRate, accuracy, totalShots, totalHits };
+  };
+
+  const typeStats = games ? computeStats(games) : null;
+
+  const tabs: { id: GameType; label: string; color: string }[] = [
+    { id: "all", label: "All Games", color: "slate" },
+    { id: "pvp", label: "PvP", color: "blue" },
+    { id: "pvbot-easy", label: "Bot Easy", color: "emerald" },
+    { id: "pvbot-medium", label: "Bot Medium", color: "amber" },
+    { id: "pvbot-hard", label: "Bot Hard", color: "red" },
+  ];
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-slide-in">
@@ -57,18 +105,50 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
         📊 Your Statistics
       </h2>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Games Played" value={gamesPlayed} icon="🎮" color="blue" />
-        <StatCard label="Games Won" value={gamesWon} icon="🏆" color="emerald" />
-        <StatCard label="Win Rate" value={`${winRate}%`} icon="📈" color="purple" />
-        <StatCard label="Accuracy" value={`${accuracy}%`} icon="🎯" color="amber" />
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2 justify-center">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveType(tab.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
+              ${activeType === tab.id
+                ? tab.color === "slate"
+                  ? "bg-slate-600 text-white"
+                  : tab.color === "blue"
+                  ? "bg-blue-600 text-white"
+                  : tab.color === "emerald"
+                  ? "bg-emerald-600 text-white"
+                  : tab.color === "amber"
+                  ? "bg-amber-600 text-white"
+                  : "bg-red-600 text-white"
+                : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+              }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard label="Total Shots" value={totalShots} icon="💥" color="slate" />
-        <StatCard label="Total Hits" value={totalHits} icon="🔥" color="red" />
-        <StatCard label="Current Streak" value={stats.currentStreak} icon="🔥" color="orange" />
-        <StatCard label="Best Duration" value={stats.bestGameDuration ? `${stats.bestGameDuration}s` : "N/A"} icon="⚡" color="cyan" />
+      {/* Stats for selected type */}
+      {typeStats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="Games Played" value={typeStats.gamesPlayed} icon="🎮" color="blue" />
+          <StatCard label="Games Won" value={typeStats.gamesWon} icon="🏆" color="emerald" />
+          <StatCard label="Win Rate" value={`${typeStats.winRate}%`} icon="📈" color="purple" />
+          <StatCard label="Accuracy" value={`${typeStats.accuracy}%`} icon="🎯" color="amber" />
+        </div>
+      )}
+
+      {/* Overall stats from profile (always shown) */}
+      <div className="card p-5 mt-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Overall Stats</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <StatCard label="Total Shots" value={stats.totalShots} icon="💥" color="slate" />
+          <StatCard label="Total Hits" value={stats.totalHits} icon="🔥" color="red" />
+          <StatCard label="Current Streak" value={stats.currentStreak} icon="🔥" color="orange" />
+          <StatCard label="Best Duration" value={stats.bestGameDuration ? `${stats.bestGameDuration}s` : "N/A"} icon="⚡" color="cyan" />
+        </div>
       </div>
     </div>
   );

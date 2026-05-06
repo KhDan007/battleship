@@ -1,13 +1,15 @@
 import React from "react";
-import { GameState, GamePhase } from "../lib/types";
+import { GameState, GamePhase, GameMode, BotDifficulty } from "../lib/types";
 import { PHASE_LABELS } from "../lib/constants";
 
 interface GameStatusProps {
   gameState: GameState;
   onReset: () => void;
+  gameMode?: GameMode;
+  botDifficulty?: BotDifficulty;
 }
 
-const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset }) => {
+const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset, gameMode, botDifficulty }) => {
   const { phase, currentPlayer, winner } = gameState;
 
   const getStatusMessage = () => {
@@ -15,6 +17,9 @@ const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset }) => {
       return `Player ${winner} Wins!`;
     }
     if (phase === "battle") {
+      if (gameMode === "pvbot" && currentPlayer === 2) {
+        return `Bot (${botDifficulty})'s Turn`;
+      }
       return `Player ${currentPlayer}'s Turn`;
     }
     return "";
@@ -64,9 +69,15 @@ const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset }) => {
 
       {phase === "battle" && (
         <p className="text-center text-sm text-slate-400">
-          Switch seats! It's now{" "}
-          <span className="text-white font-semibold">Player {currentPlayer}'s</span>{" "}
-          turn to attack
+          {gameMode === "pvbot" && currentPlayer === 2 ? (
+            <>The bot is attacking...</>
+          ) : (
+            <>
+              Switch seats! It's now{" "}
+              <span className="text-white font-semibold">Player {currentPlayer}'s</span>{" "}
+              turn to attack
+            </>
+          )}
         </p>
       )}
     </div>

@@ -25,11 +25,6 @@ import { getBotShot } from "../lib/botAI";
 import { saveGameState, loadGameState, clearGameState } from "../lib/storage";
 import { SHIP_DEFINITIONS } from "../lib/constants";
 
-type PendingAction =
-  | { type: "bot_turn"; state: GameState }
-  | { type: "bot_continue"; state: GameState }
-  | { type: "none" };
-
 export function useGameState() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [placementShip, setPlacementShip] = useState<string | null>(null);
@@ -51,98 +46,10 @@ export function useGameState() {
     currentStreak: 0,
     longestStreak: 0,
   });
-
-  const [pendingAction, setPendingAction] = useState<PendingAction>({ type: "none" });
   const botTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { user } = useAuth();
   const recordGameMutation = useMutation(api.stats.recordGame);
-
-  // Must be defined before the useEffect that references it
-  const saveGameToHistory = useCallback(async (state: GameState) => {
-    if (!user) return;
-    try {
-      const duration = state.gameStartTime
-        ? Math.floor((Date.now() - state.gameStartTime) / 1000)
-        : 0;
-      await recordGameMutation({
-        userId: user.id as Id<"users">,
-        won: state.winner === 1,
-        shots: state.players.player1.shots.length,
-        hits: state.players.player1.hits || 0,
-        durationSeconds: duration,
-        player2IsBot: state.mode === "pvbot",
-        botDifficulty: state.botDifficulty,
-        player2Id: undefined,
-        shotsPlayer1: state.players.player1.shots.length,
-        shotsPlayer2: state.players.player2.shots.length,
-        hitsPlayer1: state.players.player1.hits || 0,
-        hitsPlayer2: state.players.player2.hits || 0,
-        winnerId: state.winner === 1 ? user.id as Id<"users"> : undefined,
-      });
-    } catch (error) {
-      console.error("Failed to save game history:", error);
-    }
-  }, [user, recordGameMutation]);
-
-  // Reactive effect: processes pending actions (bot turns) without setTimeout chains
-  useEffect(() => {
-    if (pendingAction.type === "none") return;
-
-    if (pendingAction.type === "bot_turn" || pendingAction.type === "bot_continue") {
-      const state = pendingAction.state;
-      if (state.phase !== "battle") {
-        setPendingAction({ type: "none" });
-        return;
-      }
-
-      setIsBotThinking(true);
-      const timeout = setTimeout(() => {
-        setIsBotThinking(false);
-
-        const { row, col } = getBotShot(state, state.botDifficulty || "medium");
-        const targetId = state.currentPlayer === 1 ? 2 : 1;
-        const result = processShot(state, targetId, row, col);
-
-        if (result.gameOver) {
-          setGameState(result.newState);
-          saveGameToHistory(result.newState);
-          setIsProcessing(false);
-          setShotResult(null);
-          setPendingAction({ type: "none" });
-          return;
-        }
-
-        const hit = result.hit;
-        setShotResult(hit ? "hit" : "miss");
-        setGameState(result.newState);
-
-        if (hit) {
-          setTimeout(() => {
-            setShotResult(null);
-            if (result.newState.phase === "battle") {
-              setPendingAction({ type: "bot_continue", state: result.newState });
-            } else {
-              setIsProcessing(false);
-              setPendingAction({ type: "none" });
-            }
-          }, 2000);
-        } else {
-          const switched = switchTurn(result.newState);
-          setGameState(switched);
-          setTimeout(() => {
-            setIsProcessing(false);
-            setShotResult(null);
-          }, 2000);
-          setPendingAction({ type: "none" });
-        }
-      }, 1000);
-
-      return () => clearTimeout(timeout);
-    }
-
-    return undefined;
-  }, [pendingAction, saveGameToHistory]);
 
   useEffect(() => {
     setMounted(true);
@@ -177,7 +84,6 @@ export function useGameState() {
     setShotResult(null);
     setIsBotThinking(false);
     setShowModeSelector(true);
-    setPendingAction({ type: "none" });
     if (botTimeoutRef.current) {
       clearTimeout(botTimeoutRef.current);
       botTimeoutRef.current = null;
@@ -219,6 +125,7 @@ export function useGameState() {
           : newState.players.player2;
       player.grid = result.grid;
       player.ships = result.ships;
+      // Don't set ready = true - let player confirm manually
 
       setGameState(newState);
     }
@@ -236,6 +143,7 @@ export function useGameState() {
 
     if (gameState.setupPlayer === 1) {
       if (gameState.mode === "pvbot") {
+        // Auto-place bot ships and go to battle
         const botResult = autoPlaceShips(
           newState.players.player2.grid,
           SHIP_DEFINITIONS
@@ -323,6 +231,7 @@ export function useGameState() {
     [gameState, placementShip, isHorizontal]
   );
 
+
   const removeShip = useCallback(
     (shipId: string) => {
       if (!gameState || gameState.phase !== "setup") return;
@@ -338,12 +247,15 @@ export function useGameState() {
 
       const ship = player.ships[shipIndex];
 
+      // Remove ship positions from grid
       ship.positions.forEach((pos: { row: number; col: number }) => {
         player.grid[pos.row][pos.col] = "empty";
       });
 
+      // Remove ship from array
       player.ships.splice(shipIndex, 1);
 
+      // Clear placement ship if it was this ship
       if (placementShip === shipId) {
         setPlacementShip(null);
       }
@@ -353,12 +265,89 @@ export function useGameState() {
     },
     [gameState, placementShip]
   );
+  const saveGameToHistory = async (state: GameState) => {
+    if (!user) return;
+
+    try {
+      const duration = state.gameStartTime
+        ? Math.floor((Date.now() - state.gameStartTime) / 1000)
+        : 0;
+
+      await recordGameMutation({
+        userId: user.id as Id<"users">,
+        won: state.winner === 1,
+        shots: state.players.player1.shots.length,
+        hits: state.players.player1.hits || 0,
+        durationSeconds: duration,
+        player2IsBot: state.mode === "pvbot",
+        botDifficulty: state.botDifficulty,
+        player2Id: undefined,
+        shotsPlayer1: state.players.player1.shots.length,
+        shotsPlayer2: state.players.player2.shots.length,
+        hitsPlayer1: state.players.player1.hits || 0,
+        hitsPlayer2: state.players.player2.hits || 0,
+        winnerId: state.winner === 1 ? user.id as Id<"users"> : undefined,
+      });
+    } catch (error) {
+      console.error("Failed to save game history:", error);
+    }
+  };
+
+  const executeBotTurn = useCallback(
+    (currentState: GameState) => {
+      if (currentState.phase !== "battle") return;
+
+      setIsBotThinking(false);
+
+      const { row, col } = getBotShot(currentState, currentState.botDifficulty || "medium");
+      const targetId = currentState.currentPlayer === 1 ? 2 : 1;
+      const result = processShot(currentState, targetId, row, col);
+
+      if (result.gameOver) {
+        setGameState(result.newState);
+        saveGameToHistory(result.newState);
+        return;
+      }
+
+      const hit = result.hit;
+      setShotResult(hit ? "hit" : "miss");
+      setIsProcessing(true);
+      setGameState(result.newState);
+
+      if (hit) {
+        botTimeoutRef.current = setTimeout(() => {
+          setIsProcessing(false);
+          setShotResult(null);
+          if (result.newState.phase === "battle" && !checkGameOver(result.newState)) {
+            botTimeoutRef.current = setTimeout(() => {
+              executeBotTurn(result.newState);
+            }, 500);
+          }
+        }, 2000);
+      } else {
+        botTimeoutRef.current = setTimeout(() => {
+          setGameState((prev) => {
+            if (!prev) return prev;
+            const switched = switchTurn(prev);
+            setIsProcessing(false);
+            setShotResult(null);
+            return switched;
+          });
+        }, 2000);
+      }
+    },
+    [saveGameToHistory]
+  );
+
+  const checkGameOver = (state: GameState): boolean => {
+    return state.phase === "gameover";
+  };
+
+
 
   const handleShot = useCallback(
     (row: number, col: number) => {
       if (!gameState || gameState.phase !== "battle" || isProcessing) return;
-      // In PvB mode, only player 1 (human) can click to shoot
-      if (gameState.mode === "pvbot" && gameState.currentPlayer === 2) return;
 
       const targetId = gameState.currentPlayer === 1 ? 2 : 1;
       const result = processShot(gameState, targetId, row, col);
@@ -375,29 +364,31 @@ export function useGameState() {
       setGameState(result.newState);
 
       if (hit) {
-        // Player hit — stay on same turn, just clear result after delay
         setTimeout(() => {
           setIsProcessing(false);
           setShotResult(null);
         }, 2000);
       } else {
-        // Player missed — switch turn
-        const switched = switchTurn(result.newState);
-        setGameState(switched);
+        setTimeout(() => {
+          setGameState((prev) => {
+            if (!prev) return prev;
+            const switched = switchTurn(prev);
 
-        // If bot's turn next, schedule it via reactive effect
-        if (switched.mode === "pvbot" && switched.currentPlayer === 2) {
-          setIsBotThinking(true);
-          setPendingAction({ type: "bot_turn", state: switched });
-        } else {
-          setTimeout(() => {
+            if (switched.mode === "pvbot" && switched.currentPlayer === 2) {
+              setIsBotThinking(true);
+              botTimeoutRef.current = setTimeout(() => {
+                executeBotTurn(switched);
+              }, 1000);
+            }
+
             setIsProcessing(false);
             setShotResult(null);
-          }, 2000);
-        }
+            return switched;
+          });
+        }, 2000);
       }
     },
-    [gameState, isProcessing, saveGameToHistory]
+    [gameState, isProcessing, executeBotTurn]
   );
 
   const getPlacedShipsCount = useCallback(

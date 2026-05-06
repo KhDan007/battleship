@@ -24,6 +24,8 @@ export default function Home() {
     placeShip,
     handleShot,
     resetGame,
+    confirmPlacement,
+    removeShip,
     getRemainingShipsCount,
     mounted,
     isProcessing,
@@ -44,6 +46,19 @@ export default function Home() {
   const { user, setShowAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<"play" | "stats" | "history">("play");
   const [showConfirmAbandon, setShowConfirmAbandon] = useState(false);
+  const [isBotPlacing, setIsBotPlacing] = useState(false);
+
+  const handleConfirm = useCallback(() => {
+    if (gameMode === "pvbot" && gameState?.setupPlayer === 1) {
+      setIsBotPlacing(true);
+      setTimeout(() => {
+        confirmPlacement();
+        setIsBotPlacing(false);
+      }, 1500);
+    } else {
+      confirmPlacement();
+    }
+  }, [gameMode, gameState?.setupPlayer, confirmPlacement]);
 
   const selectedShipSize = placementShip
     ? SHIP_DEFINITIONS.find((s) => s.id === placementShip)?.size
@@ -132,7 +147,7 @@ export default function Home() {
             grid: player2.grid,
             onCellClick: (row: number, col: number) => handleShot(row, col),
             isInteractive: true,
-            title: gameMode === "pvbot" && currentPlayer === 1 ? "Bot Fleet - Attack!" : "Player 2 Fleet - Attack!",
+            title: gameMode === "pvbot" ? `Bot (${botDifficulty}) Fleet - Attack!` : "Player 2 Fleet - Attack!",
             isOpponentView: true,
             remainingShips: getRemainingShipsCount(2),
           }
@@ -141,10 +156,33 @@ export default function Home() {
             onCellClick: (row: number, col: number) => handleShot(row, col),
             isInteractive: gameMode === "pvp",
             title: gameMode === "pvbot" ? "Your Fleet" : "Player 1 Fleet - Attack!",
-            isOpponentView: true,
+            isOpponentView: gameMode === "pvp",
             remainingShips: getRemainingShipsCount(1),
           }
       : null;
+
+  // Tab switching during active game
+  if (activeTab === "stats") {
+    return (
+      <>
+        <Navigation activeTab={activeTab} onTabChange={setActiveTab} gameInProgress={!!gameInProgress} />
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
+          <StatisticsDashboard userId={user.id} />
+        </div>
+      </>
+    );
+  }
+
+  if (activeTab === "history") {
+    return (
+      <>
+        <Navigation activeTab={activeTab} onTabChange={setActiveTab} gameInProgress={!!gameInProgress} />
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
+          <GameHistory userId={user.id} />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -152,24 +190,38 @@ export default function Home() {
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
         {phase !== "setup" && (
           <div className="mb-6 animate-slide-in">
-            <GameStatus gameState={gameState} onReset={resetGame} />
+            <GameStatus gameState={gameState} onReset={resetGame} gameMode={gameMode} botDifficulty={botDifficulty} />
           </div>
         )}
 
         {phase === "setup" && (
           <div className="flex flex-col items-center gap-6">
-            <ShipPlacement
-              placedShips={setupPlayer === 1 ? player1.ships : player2.ships}
-              selectedShip={placementShip}
-              onSelectShip={setPlacementShip}
-              isHorizontal={isHorizontal}
-              onToggleOrientation={toggleOrientation}
-              playerName={setupPlayer === 1 ? player1.name : player2.name}
-              onConfirm={() => {}}
-              isReady={setupPlayer === 1 ? player1.ready : player2.ready}
-              onAutoPlace={autoPlace}
-              isAutoPlacing={isAutoPlacing}
-            />
+            {isBotPlacing ? (
+              <div className="text-center py-12">
+                <div className="inline-flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-xl border border-slate-700">
+                  <div className="flex gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <p className="text-lg text-slate-200 font-medium">Bot is placing ships...</p>
+                </div>
+              </div>
+            ) : (
+              <ShipPlacement
+                placedShips={setupPlayer === 1 ? player1.ships : player2.ships}
+                selectedShip={placementShip}
+                onSelectShip={setPlacementShip}
+                onRemoveShip={removeShip}
+                isHorizontal={isHorizontal}
+                onToggleOrientation={toggleOrientation}
+                playerName={setupPlayer === 1 ? player1.name : (gameMode === "pvbot" ? `Bot (${botDifficulty})` : player2.name)}
+                onConfirm={handleConfirm}
+                isReady={setupPlayer === 1 ? player1.ready : player2.ready}
+                onAutoPlace={autoPlace}
+                isAutoPlacing={isAutoPlacing}
+              />
+            )}
 
             <div className="text-center text-slate-300">
               <p className="text-lg font-semibold mb-1">

@@ -44,14 +44,12 @@ const Navigation: React.FC<NavigationProps> = ({
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => !gameInProgress || tab.id !== "play" ? onTabChange(tab.id) : null}
-                  disabled={gameInProgress && tab.id === "play"}
+                  onClick={() => onTabChange(tab.id)}
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
                     ${activeTab === tab.id
                       ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                       : "text-slate-400 hover:text-white hover:bg-slate-800"
                     }
-                    ${gameInProgress && tab.id === "play" ? "opacity-50 cursor-not-allowed" : ""}
                   `}
                 >
                   <span className="mr-1.5">{tab.icon}</span>
@@ -73,14 +71,12 @@ const Navigation: React.FC<NavigationProps> = ({
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => !gameInProgress || tab.id !== "play" ? onTabChange(tab.id) : null}
-                  disabled={gameInProgress && tab.id === "play"}
+                  onClick={() => onTabChange(tab.id)}
                   className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all
                     ${activeTab === tab.id
                       ? "text-blue-400"
                       : "text-slate-500"
                     }
-                    ${gameInProgress && tab.id === "play" ? "opacity-50 cursor-not-allowed" : ""}
                   `}
                 >
                   <span className="text-lg">{tab.icon}</span>

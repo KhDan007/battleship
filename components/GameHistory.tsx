@@ -1,10 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 import { GameRecord } from "../lib/types";
+
+type FilterType = "all" | "pvp" | "pvbot-easy" | "pvbot-medium" | "pvbot-hard";
 
 interface GameHistoryProps {
   userId: string;
@@ -12,6 +14,7 @@ interface GameHistoryProps {
 
 const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
   const games = useQuery(api.games.listByUser, { userId: userId as Id<"users"> });
+  const [filter, setFilter] = useState<FilterType>("all");
 
   if (games === undefined) {
     return (
@@ -30,6 +33,15 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
       </div>
     );
   }
+
+  const filteredGames = games.filter((game) => {
+    if (filter === "all") return true;
+    if (filter === "pvp") return !game.player2IsBot;
+    return (
+      game.player2IsBot &&
+      game.botDifficulty === filter.replace("pvbot-", "")
+    );
+  });
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -56,14 +68,39 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
     );
   };
 
+  const filters: { id: FilterType; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "pvp", label: "PvP" },
+    { id: "pvbot-easy", label: "Bot Easy" },
+    { id: "pvbot-medium", label: "Bot Medium" },
+    { id: "pvbot-hard", label: "Bot Hard" },
+  ];
+
   return (
     <div className="max-w-2xl mx-auto animate-slide-in">
       <h2 className="text-2xl font-bold text-white text-center mb-6">
         📜 Game History
       </h2>
 
+      {/* Filter tabs */}
+      <div className="flex flex-wrap gap-2 justify-center mb-6">
+        {filters.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
+              ${filter === f.id
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+              }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-3">
-        {games.map((game) => {
+        {filteredGames.map((game) => {
           const isPlayer1 = game.player1Id === userId;
           const won = game.winnerId === userId;
           const shots = (isPlayer1 ? game.shotsPlayer1 : game.shotsPlayer2) ?? 0;
