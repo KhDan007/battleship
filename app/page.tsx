@@ -5,13 +5,14 @@ import { useGameState } from "../hooks/useGameState";
 import { useOnlineGame } from "../hooks/useOnlineGame";
 import { useAuth } from "../contexts/AuthContext";
 import AuthModal from "../components/AuthModal";
+import StatsHistoryModal from "../components/StatsHistoryModal";
 import OnlineGameManager from "../components/OnlineGameManager";
 import LocalGameManager from "../components/LocalGameManager";
 
 export default function Home() {
   const { user, setShowAuthModal } = useAuth();
   const { mounted, gameMode, setGameMode } = useGameState();
-  const [activeTab, setActiveTab] = useState<"play" | "stats" | "history">("play");
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   const onlineGame = useOnlineGame();
 
@@ -43,22 +44,28 @@ export default function Home() {
     );
   }
 
+  const handleOpenStatsHistory = () => setShowStatsModal(true);
+  const handleCloseStatsHistory = () => setShowStatsModal(false);
+
   return (
     <>
       {gameMode === "online" ? (
         <OnlineGameManager
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
           onlineGame={onlineGame}
           gameMode={gameMode}
           setGameMode={setGameMode}
+          onOpenStatsHistory={handleOpenStatsHistory}
         />
       ) : (
         <LocalGameManager
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onOpenStatsHistory={handleOpenStatsHistory}
         />
       )}
+      <StatsHistoryModal
+        userId={user.id}
+        isOpen={showStatsModal}
+        onClose={handleCloseStatsHistory}
+      />
     </>
   );
 }

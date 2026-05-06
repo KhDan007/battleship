@@ -54,14 +54,19 @@ Real-time multiplayer using Convex backend (no separate WebSocket server):
 - **Join methods**: By invite code entry or by clicking invite link
 - **Guest support**: Guests can play (no login required) - uses `guestId` in localStorage
 - **Real-time sync**: Convex `useQuery` subscribes to game state changes automatically
-- **Ship placement**: Both players place ships sequentially, then `startBattle()` begins
-- **Battle phase**: Players take turns shooting; `recordShot` mutation updates both players' views
+- **Host auto-connect**: `OnlineLobby` receives `hostGame` and `joinGame` as props from parent's `useOnlineGame()` hook instance (not a separate instance) so state persists correctly when opponent joins
+- **Ship placement**: Both players place ships; `useEffect` watches both `player1Ships` and `player2Ships` to auto-start battle via `startBattle()`
+- **Battle phase**: 
+  - Players take turns shooting; `recordShot` mutation updates both players' views
+  - **Hit = go again**: Turn stays same on hit, switches only on miss (backend `recordShot` mutation preserves `currentTurn` on hit)
+  - **Hit/miss animation**: `OnlineGameManager` uses `shotResult` and `onlineIsProcessing` states with `useEffect` watching `onlineState?.shots` to show "Hit! Go again!" or "Miss!" feedback for 2000ms
 - **Heartbeat**: Every 5s, `updateLastSeen` mutation keeps player "alive"
 - **Disconnect handling**: 
   - >15s since last seen → game pauses (`status: "paused"`)
   - >60s since last seen → opponent wins by forfeit
   - Reconnect within 60s → game resumes (`status: "battle"`)
 - **Game phases**: `"waiting"` → `"setup"` → `"battle"` → `"completed"` (with `"paused"` possible during battle)
+- **Usernames**: `getOnlineGame` Convex query fetches and returns `player1Username` and `player2Username`; UI displays actual usernames instead of "Player 1"/"Player 2"
 
 ### Game Flow
 
@@ -88,7 +93,7 @@ Real-time multiplayer using Convex backend (no separate WebSocket server):
   - **New fields for online multiplayer**: `status` ("waiting"|"setup"|"battle"|"paused"|"completed"), `player1Ships`, `player2Ships`, `player1Grid`, `player2Grid`, `shots`, `currentTurn`, `player1LastSeen`, `player2LastSeen`, `pausedAt`, `inviteCode`, `player1GuestId`, `player2GuestId`
   - **New `invites` table**: `code` (6-char), `createdBy`, `createdByGuestId`, `targetUsername`, `targetUserId`, `gameId`, `status` ("pending"|"accepted"|"expired"), `expiresAt`
 - `convex/auth.ts` - Sign up/in mutations (stores password in plain text - dev only); `getUserByUsername` query
-- `convex/games.ts` - Save game mutations (supports `winner` field); **New**: `getOnlineGame`, `updatePlayerShips`, `recordShot`, `updateLastSeen`, `checkDisconnects`, `startBattle`
+- `convex/games.ts` - Save game mutations (supports `winner` field); **New**: `getOnlineGame` (returns `player1Username`/`player2Username`), `updatePlayerShips`, `recordShot` (preserves `currentTurn` on hit so player goes again; switches only on miss), `updateLastSeen`, `checkDisconnects`, `startBattle`
 - `convex/invites.ts` (NEW) - `createInvite`, `getInviteByCode`, `getPendingInvitesForUser`, `acceptInvite`, `cleanupExpiredInvites`
 - `convex/stats.ts` - Update user stats mutations (records `winner` field)
 - Generated types in `convex/_generated/`
@@ -101,11 +106,12 @@ Real-time multiplayer using Convex backend (no separate WebSocket server):
 
 ### Online Multiplayer Components
 
-- **`components/OnlineLobby.tsx`** - Lobby UI with Host/Join tabs, invite code display, copy-to-clipboard. Uses `useOnlineGame()` hook for proper state persistence
+- **`components/OnlineLobby.tsx`** - Lobby UI with Host/Join tabs, invite code display, copy-to-clipboard. Receives `hostGame` and `joinGame` as props from parent's `useOnlineGame()` hook instance (NOT its own instance) to ensure state persistence
 - **`components/WaitingRoom.tsx`** - Shown while waiting for opponent to join (status: "waiting")
 - **`components/DisconnectNotification.tsx`** - Overlay shown when opponent disconnects, with 60s countdown timer
 - **`app/join/page.tsx`** - Join page that reads `?code=XXXXXX` from URL, auto-joins game, sets `gameMode` to "online", redirects to `/` on success
 - **`hooks/useOnlineGame.ts`** - Central hook for online multiplayer: manages gameId/playerNum via localStorage, Convex real-time sync, heartbeat, disconnect detection, ship placement, and shot handling
+- **`components/OnlineGameManager.tsx`** - Manages all online phases; includes `shotResult` and `onlineIsProcessing` states for hit/miss animation, `useEffect` watches `onlineState?.shots` to detect shot results
 
 ### Bot AI (`lib/botAI.ts`)
 
@@ -160,3 +166,11 @@ Implements three difficulty levels with distinct strategies:
    - `app/page.tsx` - Simplified to ~50 lines (auth check + routing)
    - `components/OnlineGameManager.tsx` - All online multiplayer game phases
    - `components/LocalGameManager.tsx` - All local game modes (pvp, pvbot)
+
+5. **Host not auto-connecting when opponent joins**: `OnlineLobby` was calling its own `useOnlineGame()` creating a separate instance, so `hostGame()` updated the wrong state. Fixed by passing `hostGame` and `joinGame` from the parent's hook instance as props to `OnlineLobby`. Host now automatically transitions to ship placement when opponent joins.
+
+6. **No hit/miss animation in online games**: Added `shotResult` and `onlineIsProcessing` states to `OnlineGameManager`. Added `useEffect` that watches `onlineState?.shots` and detects new shots to show "Hit! Go again!" or "Miss!" feedback with 2000ms animation.
+
+7. **Turn switching on hit instead of miss**: Updated `recordShot` Convex mutation to NOT switch `currentTurn` on hit. Player keeps shooting until they miss. Turn only switches after a miss, matching local game behavior.
+
+8. **Show actual usernames instead of "Player 1"/"Player 2"**: Updated `getOnlineGame` Convex query to fetch and return `player1Username` and `player2Username`. Added fields to `OnlineGameState` interface. Updated `OnlineGameManager` and `GameStatus` to display actual usernames throughout the UI.

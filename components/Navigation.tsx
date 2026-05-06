@@ -1,32 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import ThemeToggle from "./ThemeToggle";
 import UserMenu from "./UserMenu";
 import AuthModal from "./AuthModal";
 import { useAuth } from "../contexts/AuthContext";
 
-type Tab = "play" | "stats" | "history";
-
 interface NavigationProps {
-  activeTab: Tab;
-  onTabChange: (tab: Tab) => void;
-  gameInProgress: boolean;
+  onOpenStatsHistory: () => void;
 }
 
-const Navigation: React.FC<NavigationProps> = ({
-  activeTab,
-  onTabChange,
-  gameInProgress,
-}) => {
+const Navigation: React.FC<NavigationProps> = ({ onOpenStatsHistory }) => {
   const { user } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: "play", label: "Play", icon: "⚓" },
-    { id: "stats", label: "Stats", icon: "📊" },
-    { id: "history", label: "History", icon: "📜" },
-  ];
 
   return (
     <>
@@ -39,53 +24,23 @@ const Navigation: React.FC<NavigationProps> = ({
             </span>
           </div>
 
-          {user && (
-            <div className="hidden sm:flex items-center gap-1 bg-slate-900/50 rounded-lg p-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => onTabChange(tab.id)}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200
-                    ${activeTab === tab.id
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800"
-                    }
-                  `}
-                >
-                  <span className="mr-1.5">{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          )}
-
           <div className="flex items-center gap-3">
+            {user && (
+              <button
+                onClick={onOpenStatsHistory}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                title="View Stats & History"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="hidden sm:inline">Stats</span>
+              </button>
+            )}
             <ThemeToggle />
             <UserMenu />
           </div>
         </div>
-
-        {user && (
-          <div className="sm:hidden border-t border-slate-800 px-4 py-2">
-            <div className="flex items-center justify-around">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => onTabChange(tab.id)}
-                  className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-all
-                    ${activeTab === tab.id
-                      ? "text-blue-400"
-                      : "text-slate-500"
-                    }
-                  `}
-                >
-                  <span className="text-lg">{tab.icon}</span>
-                  <span className="text-xs">{tab.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </nav>
     </>
   );

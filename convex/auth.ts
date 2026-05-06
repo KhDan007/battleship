@@ -4,12 +4,19 @@ import { v } from "convex/values";
 export const signUp = mutation({
   args: { email: v.string(), password: v.string(), username: v.string() },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
+    const existingEmail = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
-    if (existing) {
-      throw new Error("Email already registered");
+    if (existingEmail) {
+      throw new Error("This email is already registered. Try signing in instead.");
+    }
+    const existingUsername = await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .first();
+    if (existingUsername) {
+      throw new Error("This username is already taken. Please choose a different one.");
     }
     const userId = await ctx.db.insert("users", {
       email: args.email,

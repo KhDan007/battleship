@@ -7,18 +7,15 @@ import GameBoard from "./GameBoard";
 import ShipPlacement from "./ShipPlacement";
 import GameStatus from "./GameStatus";
 import GameModeSelector from "./GameModeSelector";
-import StatisticsDashboard from "./StatisticsDashboard";
-import GameHistory from "./GameHistory";
 import Navigation from "./Navigation";
 import { GameMode, BotDifficulty } from "../lib/types";
 import { SHIP_DEFINITIONS } from "../lib/constants";
 
 interface LocalGameManagerProps {
-  activeTab: "play" | "stats" | "history";
-  onTabChange: (tab: "play" | "stats" | "history") => void;
+  onOpenStatsHistory: () => void;
 }
 
-export default function LocalGameManager({ activeTab, onTabChange }: LocalGameManagerProps) {
+export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManagerProps) {
   const {
     gameState,
     placementShip,
@@ -90,23 +87,17 @@ export default function LocalGameManager({ activeTab, onTabChange }: LocalGameMa
   if (showModeSelector || !gameState) {
     return (
       <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={!!gameInProgress} />
+        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
         <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
-          {activeTab === "play" && (
-            <div>
-              <GameModeSelector
-                mode={gameMode as GameMode}
-                onModeChange={(m) => setGameMode(m)}
-                botDifficulty={botDifficulty as BotDifficulty}
-                onDifficultyChange={(d) => setBotDifficulty(d)}
-                onStart={() => startGame(gameMode as GameMode, botDifficulty as BotDifficulty)}
-                onStartOnline={() => {}}
-                disabled={false}
-              />
-            </div>
-          )}
-          {activeTab === "stats" && user && <StatisticsDashboard userId={user.id} />}
-          {activeTab === "history" && user && <GameHistory userId={user.id} />}
+          <GameModeSelector
+            mode={gameMode as GameMode}
+            onModeChange={(m) => setGameMode(m)}
+            botDifficulty={botDifficulty as BotDifficulty}
+            onDifficultyChange={(d) => setBotDifficulty(d)}
+            onStart={() => startGame(gameMode as GameMode, botDifficulty as BotDifficulty)}
+            onStartOnline={() => {}}
+            disabled={false}
+          />
         </div>
       </>
     );
@@ -137,31 +128,9 @@ export default function LocalGameManager({ activeTab, onTabChange }: LocalGameMa
           }
       : null;
 
-  if (activeTab === "stats") {
-    return (
-      <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={!!gameInProgress} />
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
-          {user && <StatisticsDashboard userId={user.id} />}
-        </div>
-      </>
-    );
-  }
-
-  if (activeTab === "history") {
-    return (
-      <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={!!gameInProgress} />
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
-          {user && <GameHistory userId={user.id} />}
-        </div>
-      </>
-    );
-  }
-
   return (
     <>
-      <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={!!gameInProgress} />
+      <Navigation onOpenStatsHistory={onOpenStatsHistory} />
       <div className="max-w-4xl mx-auto p-4 sm:p-6">
         {phase !== "setup" && (
           <div className="mb-6 animate-slide-in">

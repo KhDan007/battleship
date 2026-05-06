@@ -1,0 +1,82 @@
+"use client";
+
+import React, { useState } from "react";
+import StatisticsDashboard from "./StatisticsDashboard";
+import GameHistory from "./GameHistory";
+
+type StatsHistoryTab = "stats" | "history";
+
+interface StatsHistoryModalProps {
+  userId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const StatsHistoryModal: React.FC<StatsHistoryModalProps> = ({
+  userId,
+  isOpen,
+  onClose,
+}) => {
+  const [activeTab, setActiveTab] = useState<StatsHistoryTab>("stats");
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          aria-label="Close"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+          {activeTab === "stats" ? "📊 Your Statistics" : "📜 Game History"}
+        </h2>
+
+        {/* Tabs */}
+        <div className="flex gap-2 justify-center mb-6">
+          <button
+            onClick={() => setActiveTab("stats")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "stats"
+                ? "bg-blue-600 text-white"
+                : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-700"
+            }`}
+          >
+            📊 Stats
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "history"
+                ? "bg-blue-600 text-white"
+                : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-700"
+            }`}
+          >
+            📜 History
+          </button>
+        </div>
+
+        {/* Content */}
+        <div>
+          {activeTab === "stats" ? (
+            <StatisticsDashboard userId={userId} />
+          ) : (
+            <GameHistory userId={userId} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StatsHistoryModal;

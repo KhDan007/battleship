@@ -16,8 +16,6 @@ import { autoPlaceShips } from "../lib/gameLogic";
 import { OnlineGameState, Ship, CellState } from "../lib/types";
 
 interface OnlineGameManagerProps {
-  activeTab: "play" | "stats" | "history";
-  onTabChange: (tab: "play" | "stats" | "history") => void;
   onlineGame: {
     gameId: string | null;
     playerNum: 1 | 2 | null;
@@ -43,14 +41,14 @@ interface OnlineGameManagerProps {
   };
   gameMode: string;
   setGameMode: (mode: GameMode) => void;
+  onOpenStatsHistory: () => void;
 }
 
 export default function OnlineGameManager({
-  activeTab,
-  onTabChange,
   onlineGame,
   gameMode,
   setGameMode,
+  onOpenStatsHistory,
 }: OnlineGameManagerProps) {
   const {
     showModeSelector,
@@ -154,7 +152,7 @@ export default function OnlineGameManager({
   if (!onlineGameId) {
     return (
       <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={false} />
+        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
         <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
           {showModeSelector ? (
             <GameModeSelector
@@ -182,7 +180,7 @@ export default function OnlineGameManager({
   if (onlineState?.status === "waiting") {
     return (
       <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={true} />
+        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
         <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
           {onlineInviteCode && (
             <WaitingRoom
@@ -208,7 +206,7 @@ export default function OnlineGameManager({
 
     return (
       <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={true} />
+        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
         <div className="max-w-4xl mx-auto p-4 sm:p-6">
           <div className="mb-6 animate-slide-in">
             <GameStatus
@@ -287,7 +285,7 @@ export default function OnlineGameManager({
 
     return (
       <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={true} />
+        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
 
         {isPaused && (
           <DisconnectNotification
@@ -334,19 +332,38 @@ export default function OnlineGameManager({
             </div>
           )}
 
-          <div className="animate-slide-in">
-            <GameBoard
-              grid={onlineOpponentGrid || []}
-              onCellClick={handleOnlineShot}
-              isInteractive={onlineIsMyTurn && !onlineIsProcessing}
-              title={`${opponentName}'s Fleet — Attack!`}
-              isOpponentView={true}
-              remainingShips={onlineOpponentShips ? onlineOpponentShips.filter((s: any) =>
-                !s.positions.every(([r, c]: [number, number]) =>
-                  onlineOpponentGrid?.[r]?.[c] === "sunk"
-                )
-              ).length : 0}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-in">
+            {/* Player's own board */}
+            <div>
+              <GameBoard
+                grid={onlineMyGrid || []}
+                onCellClick={() => {}}
+                isInteractive={false}
+                title={`${myName}'s Fleet`}
+                isOpponentView={false}
+                remainingShips={onlineMyShips ? onlineMyShips.filter((s: any) =>
+                  !s.positions.every(([r, c]: [number, number]) =>
+                    onlineMyGrid?.[r]?.[c] === "sunk"
+                  )
+                ).length : 0}
+              />
+            </div>
+
+            {/* Opponent's board (attackable) */}
+            <div>
+              <GameBoard
+                grid={onlineOpponentGrid || []}
+                onCellClick={handleOnlineShot}
+                isInteractive={onlineIsMyTurn && !onlineIsProcessing}
+                title={`${opponentName}'s Fleet — Attack!`}
+                isOpponentView={true}
+                remainingShips={onlineOpponentShips ? onlineOpponentShips.filter((s: any) =>
+                  !s.positions.every(([r, c]: [number, number]) =>
+                    onlineOpponentGrid?.[r]?.[c] === "sunk"
+                  )
+                ).length : 0}
+              />
+            </div>
           </div>
 
           <div className="mt-6 text-center">
@@ -368,7 +385,7 @@ export default function OnlineGameManager({
 
     return (
       <>
-        <Navigation activeTab={activeTab} onTabChange={onTabChange} gameInProgress={false} />
+        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
         <div className="max-w-4xl mx-auto p-4 sm:p-6">
           <div className="text-center mb-6 animate-slide-in">
             <h2 className="text-3xl font-bold text-white mb-2">

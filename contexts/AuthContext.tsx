@@ -51,9 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       return { error: null };
     } catch (err: any) {
+      const backendMessage = err.message || "Authentication failed";
       const message = err.message === "Connection timeout"
         ? "Unable to connect to server. Please make sure Convex is running."
-        : err.message || "Authentication failed";
+        : backendMessage;
       return { error: { message } };
     }
   };
@@ -61,15 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const result = await withTimeout(signInMutation({ email, password }));
-      if (!result) return { error: { message: "Invalid email or password" } };
+      if (!result) return { error: { message: "Invalid email or password. Please check your credentials and try again." } };
       const userData = { id: result.userId, email: result.email, username: result.username };
       localStorage.setItem("battleship_user", JSON.stringify(userData));
       setUser(userData);
       return { error: null };
     } catch (err: any) {
+      const backendMessage = err.message || "Authentication failed";
       const message = err.message === "Connection timeout"
         ? "Unable to connect to server. Please make sure Convex is running."
-        : err.message || "Authentication failed";
+        : backendMessage;
       return { error: { message } };
     }
   };
