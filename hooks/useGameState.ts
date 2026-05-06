@@ -79,6 +79,7 @@ export function useGameState() {
         hitsPlayer1: state.players.player1.hits || 0,
         hitsPlayer2: state.players.player2.hits || 0,
         winnerId: state.winner === 1 ? user.id as Id<"users"> : undefined,
+        winner: state.winner as 1 | 2,
       });
     } catch (error) {
       console.error("Failed to save game history:", error);

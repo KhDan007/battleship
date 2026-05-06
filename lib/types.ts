@@ -66,6 +66,7 @@ export interface GameRecord {
   player2IsBot: boolean;
   botDifficulty: BotDifficulty | null;
   winnerId: string | null;
+  winner?: 1 | 2;
   shotsPlayer1: number;
   shotsPlayer2: number;
   hitsPlayer1: number;

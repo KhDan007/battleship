@@ -101,10 +101,9 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
 
       <div className="space-y-3">
         {filteredGames.map((game) => {
-          const isPlayer1 = game.player1Id === userId;
-          const won = game.winnerId === userId;
-          const shots = (isPlayer1 ? game.shotsPlayer1 : game.shotsPlayer2) ?? 0;
-          const hits = (isPlayer1 ? game.hitsPlayer1 : game.hitsPlayer2) ?? 0;
+          const won = game.winner ? game.winner === 1 : game.winnerId === userId;
+          const shots = game.shotsPlayer1 ?? 0;
+          const hits = game.hitsPlayer1 ?? 0;
           const accuracy = shots > 0 ? Math.round((hits / shots) * 100) : 0;
 
           return (
@@ -113,15 +112,13 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
               className={`card p-4 border ${
                 won
                   ? "border-emerald-500/30 bg-emerald-500/5"
-                  : game.winnerId
-                  ? "border-red-500/30 bg-red-500/5"
-                  : "border-slate-700"
+                  : "border-red-500/30 bg-red-500/5"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">
-                    {won ? "🏆" : game.winnerId ? "💔" : "⚔️"}
+                    {won ? "🏆" : "💔"}
                   </span>
                   <div>
                     <div className="font-semibold text-white">
@@ -140,7 +137,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
                 </div>
                 <div className="text-right">
                   <div className={`text-sm font-bold ${won ? "text-emerald-400" : "text-red-400"}`}>
-                    {won ? "Won" : game.winnerId ? "Lost" : "Draw"}
+                    {won ? "Won" : "Lost"}
                   </div>
                   <div className="text-xs text-slate-400">
                     {shots} shots • {accuracy}% acc

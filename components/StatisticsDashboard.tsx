@@ -15,6 +15,7 @@ type GameFromDb = {
   player2IsBot: boolean;
   botDifficulty?: string;
   winnerId?: Id<"users">;
+  winner?: 1 | 2;
   shotsPlayer1: number;
   shotsPlayer2: number;
   hitsPlayer1: number;
@@ -71,7 +72,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
 
     const gamesPlayed = filtered.length;
     const gamesWon = filtered.filter(
-      (g) => g.winnerId === userId
+      (g) => g.winner ? g.winner === 1 : g.winnerId === userId
     ).length;
     const totalShots = filtered.reduce(
       (sum, g) => sum + (g.shotsPlayer1 || 0),

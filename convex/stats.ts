@@ -50,6 +50,7 @@ export const recordGame = mutation({
     hitsPlayer1: v.number(),
     hitsPlayer2: v.number(),
     winnerId: v.optional(v.id("users")),
+    winner: v.union(v.literal(1), v.literal(2)),
   },
   handler: async (ctx, args) => {
     // Save game to games table
@@ -59,6 +60,7 @@ export const recordGame = mutation({
       player2IsBot: args.player2IsBot || false,
       botDifficulty: args.botDifficulty,
       winnerId: args.winnerId,
+      winner: args.winner,
       shotsPlayer1: args.shotsPlayer1,
       shotsPlayer2: args.shotsPlayer2,
       hitsPlayer1: args.hitsPlayer1,

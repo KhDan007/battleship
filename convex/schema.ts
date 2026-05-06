@@ -26,6 +26,7 @@ export default defineSchema({
     player2IsBot: v.boolean(),
     botDifficulty: v.optional(v.string()),
     winnerId: v.optional(v.id("users")),
+    winner: v.optional(v.union(v.literal(1), v.literal(2))),
     shotsPlayer1: v.number(),
     shotsPlayer2: v.number(),
     hitsPlayer1: v.number(),
