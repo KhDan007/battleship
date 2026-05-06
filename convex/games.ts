@@ -40,7 +40,27 @@ export const listByUser = query({
 export const getOnlineGame = query({
   args: { gameId: v.id("games") },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.gameId);
+    const game = await ctx.db.get(args.gameId);
+    if (!game) return null;
+
+    // Fetch player usernames
+    let player1Username = "Player 1";
+    let player2Username = "Player 2";
+
+    if (game.player1Id) {
+      const player1 = await ctx.db.get(game.player1Id);
+      if (player1) player1Username = player1.username;
+    }
+    if (game.player2Id) {
+      const player2 = await ctx.db.get(game.player2Id);
+      if (player2) player2Username = player2.username;
+    }
+
+    return {
+      ...game,
+      player1Username,
+      player2Username,
+    };
   },
 });
 

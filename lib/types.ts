@@ -96,4 +96,6 @@ export interface OnlineGameState {
   player2IsBot?: boolean;
   botDifficulty?: BotDifficulty;
   gameStartTime?: number;
+  player1Username?: string;
+  player2Username?: string;
 }

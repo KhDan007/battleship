@@ -14,13 +14,15 @@ const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset, gameMode, b
 
   const getStatusMessage = () => {
     if (phase === "gameover" && winner) {
-      return `Player ${winner} Wins!`;
+      const winnerName = gameState.players?.[`player${winner}`]?.name || `Player ${winner}`;
+      return `${winnerName} Wins!`;
     }
     if (phase === "battle") {
       if (gameMode === "pvbot" && currentPlayer === 2) {
         return `Bot (${botDifficulty})'s Turn`;
       }
-      return `Player ${currentPlayer}'s Turn`;
+      const currentPlayerName = gameState.players?.[`player${currentPlayer}`]?.name || `Player ${currentPlayer}`;
+      return `${currentPlayerName}'s Turn`;
     }
     return "";
   };
@@ -74,7 +76,9 @@ const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset, gameMode, b
           ) : (
             <>
               Switch seats! It's now{" "}
-              <span className="text-white font-semibold">Player {currentPlayer}'s</span>{" "}
+              <span className="text-white font-semibold">
+                {gameState.players?.[`player${currentPlayer}`]?.name || `Player ${currentPlayer}`}'s
+              </span>{" "}
               turn to attack
             </>
           )}
