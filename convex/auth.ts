@@ -43,3 +43,13 @@ export const signIn = mutation({
     return { userId: user._id, email: user.email, username: user.username };
   },
 });
+
+export const getUserByUsername = query({
+  args: { username: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_username", (q) => q.eq("username", args.username))
+      .first();
+  },
+});

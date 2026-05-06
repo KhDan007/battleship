@@ -2,7 +2,7 @@ export type CellState = "empty" | "ship" | "hit" | "miss" | "sunk";
 
 export type GamePhase = "setup" | "battle" | "gameover";
 
-export type GameMode = "pvp" | "pvbot";
+export type GameMode = "pvp" | "pvbot" | "online";
 
 export type BotDifficulty = "easy" | "medium" | "hard";
 
@@ -73,4 +73,27 @@ export interface GameRecord {
   hitsPlayer2: number;
   durationSeconds: number;
   createdAt: string;
+}
+
+export interface OnlineGameState {
+  _id: string;
+  status: "waiting" | "setup" | "battle" | "paused" | "completed";
+  currentTurn: 1 | 2;
+  player1Id?: string;
+  player1GuestId?: string;
+  player2Id?: string;
+  player2GuestId?: string;
+  player1Ships?: Ship[];
+  player2Ships?: Ship[];
+  player1Grid?: CellState[][];
+  player2Grid?: CellState[][];
+  shots?: { player: 1 | 2; row: number; col: number; hit: boolean; timestamp: number }[];
+  winner?: 1 | 2;
+  player1LastSeen?: number;
+  player2LastSeen?: number;
+  pausedAt?: number;
+  inviteCode?: string;
+  player2IsBot?: boolean;
+  botDifficulty?: BotDifficulty;
+  gameStartTime?: number;
 }

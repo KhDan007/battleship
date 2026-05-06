@@ -9,6 +9,7 @@ interface GameModeSelectorProps {
   botDifficulty: BotDifficulty;
   onDifficultyChange: (difficulty: BotDifficulty) => void;
   onStart: () => void;
+  onStartOnline: () => void;
   disabled?: boolean;
 }
 
@@ -18,15 +19,16 @@ const GameModeSelector: React.FC<GameModeSelectorProps> = ({
   botDifficulty,
   onDifficultyChange,
   onStart,
+  onStartOnline,
   disabled = false,
 }) => {
   return (
-    <div className="card p-6 max-w-lg w-full mx-auto mb-6 animate-slide-in">
+    <div className="card p-6 max-w-4xl w-full mx-auto mb-6 animate-slide-in">
       <h2 className="text-xl font-bold text-center text-white mb-6">
         Choose Game Mode
       </h2>
 
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <button
           onClick={() => onModeChange("pvp")}
           className={`p-4 rounded-xl border-2 transition-all duration-200
@@ -51,6 +53,19 @@ const GameModeSelector: React.FC<GameModeSelectorProps> = ({
           <div className="text-3xl mb-2">🤖</div>
           <div className="font-semibold text-white mb-1">Player vs Bot</div>
           <div className="text-xs text-slate-400">Challenge the AI</div>
+        </button>
+
+        <button
+          onClick={() => onModeChange("online")}
+          className={`p-4 rounded-xl border-2 transition-all duration-200
+            ${mode === "online"
+              ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
+              : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+            }`}
+        >
+          <div className="text-3xl mb-2">🌐</div>
+          <div className="font-semibold text-white mb-1">Online Multiplayer</div>
+          <div className="text-xs text-slate-400">Invite a friend</div>
         </button>
       </div>
 
@@ -89,12 +104,12 @@ const GameModeSelector: React.FC<GameModeSelectorProps> = ({
       )}
 
       <button
-        onClick={onStart}
+        onClick={mode === "online" ? onStartOnline : onStart}
         disabled={disabled}
         className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold
                    transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Start Game
+        {mode === "online" ? "Create & Invite" : "Start Game"}
       </button>
     </div>
   );
