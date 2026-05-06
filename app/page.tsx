@@ -1,11 +1,17 @@
 "use client";
 
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { useGameState } from "../hooks/useGameState";
 import GameBoard from "../components/GameBoard";
 import ShipPlacement from "../components/ShipPlacement";
 import GameStatus from "../components/GameStatus";
-import { GamePhase } from "../lib/types";
+import GameModeSelector from "../components/GameModeSelector";
+import StatisticsDashboard from "../components/StatisticsDashboard";
+import GameHistory from "../components/GameHistory";
+import Navigation from "../components/Navigation";
+import AuthModal from "../components/AuthModal";
+import { useAuth } from "../contexts/AuthContext";
+import { GamePhase, GameMode, BotDifficulty } from "../lib/types";
 import { SHIP_DEFINITIONS } from "../lib/constants";
 
 export default function Home() {
@@ -22,7 +28,22 @@ export default function Home() {
     mounted,
     isProcessing,
     shotResult,
+    gameMode,
+    setGameMode,
+    botDifficulty,
+    setBotDifficulty,
+    showModeSelector,
+    setShowModeSelector,
+    startGame,
+    isBotThinking,
+    isAutoPlacing,
+    autoPlace,
+    stats,
   } = useGameState();
+
+  const { user, setShowAuthModal } = useAuth();
+  const [activeTab, setActiveTab] = useState<"play" | "stats" | "history">("play");
+  const [showConfirmAbandon, setShowConfirmAbandon] = useState(false);
 
   const selectedShipSize = placementShip
     ? SHIP_DEFINITIONS.find((s) => s.id === placementShip)?.size
@@ -46,11 +67,57 @@ export default function Home() {
     }
   }, [gameState?.setupPlayer, setPlacementShip]);
 
-  if (!mounted || !gameState) {
+  if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <div className="animate-pulse text-slate-300 text-xl">Loading...</div>
       </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <AuthModal />
+        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">⚓ Battleship</h1>
+          <p className="text-slate-400 text-lg mb-8 text-center max-w-md">
+            The classic naval combat game. Sign in to track your stats and play against AI opponents.
+          </p>
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-lg transition-colors"
+          >
+            Sign In to Play
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  const gameInProgress = gameState && gameState.phase !== "gameover";
+
+  if (showModeSelector || !gameState) {
+    return (
+      <>
+        <Navigation activeTab={activeTab} onTabChange={setActiveTab} gameInProgress={!!gameInProgress} />
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 pt-8">
+          {activeTab === "play" && (
+            <div>
+              <GameModeSelector
+                mode={gameMode}
+                onModeChange={(m) => setGameMode(m)}
+                botDifficulty={botDifficulty}
+                onDifficultyChange={(d) => setBotDifficulty(d)}
+                onStart={() => startGame(gameMode, botDifficulty)}
+                disabled={false}
+              />
+            </div>
+          )}
+          {activeTab === "stats" && <StatisticsDashboard userId={user.id} />}
+          {activeTab === "history" && <GameHistory userId={user.id} />}
+        </div>
+      </>
     );
   }
 
@@ -63,31 +130,26 @@ export default function Home() {
       ? currentPlayer === 1
         ? {
             grid: player2.grid,
-            onCellClick: (row: number, col: number) =>
-              handleShot(row, col),
+            onCellClick: (row: number, col: number) => handleShot(row, col),
             isInteractive: true,
-            title: "Player 2 Fleet - Attack!",
+            title: gameMode === "pvbot" && currentPlayer === 1 ? "Bot Fleet - Attack!" : "Player 2 Fleet - Attack!",
             isOpponentView: true,
             remainingShips: getRemainingShipsCount(2),
           }
         : {
             grid: player1.grid,
-            onCellClick: (row: number, col: number) =>
-              handleShot(row, col),
-            isInteractive: true,
-            title: "Player 1 Fleet - Attack!",
+            onCellClick: (row: number, col: number) => handleShot(row, col),
+            isInteractive: gameMode === "pvp",
+            title: gameMode === "pvbot" ? "Your Fleet" : "Player 1 Fleet - Attack!",
             isOpponentView: true,
             remainingShips: getRemainingShipsCount(1),
           }
       : null;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 sm:p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-bold text-center text-white mb-2 tracking-tight">
-          ⚓ Battleship
-        </h1>
-
+    <>
+      <Navigation activeTab={activeTab} onTabChange={setActiveTab} gameInProgress={!!gameInProgress} />
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
         {phase !== "setup" && (
           <div className="mb-6 animate-slide-in">
             <GameStatus gameState={gameState} onReset={resetGame} />
@@ -97,42 +159,30 @@ export default function Home() {
         {phase === "setup" && (
           <div className="flex flex-col items-center gap-6">
             <ShipPlacement
-              placedShips={
-                setupPlayer === 1 ? player1.ships : player2.ships
-              }
+              placedShips={setupPlayer === 1 ? player1.ships : player2.ships}
               selectedShip={placementShip}
               onSelectShip={setPlacementShip}
               isHorizontal={isHorizontal}
               onToggleOrientation={toggleOrientation}
-              playerName={
-                setupPlayer === 1 ? player1.name : player2.name
-              }
+              playerName={setupPlayer === 1 ? player1.name : player2.name}
               onConfirm={() => {}}
-              isReady={
-                setupPlayer === 1 ? player1.ready : player2.ready
-              }
+              isReady={setupPlayer === 1 ? player1.ready : player2.ready}
+              onAutoPlace={autoPlace}
+              isAutoPlacing={isAutoPlacing}
             />
 
             <div className="text-center text-slate-300">
               <p className="text-lg font-semibold mb-1">
-                {setupPlayer === 1
-                  ? "Player 1: Place Your Ships"
-                  : "Player 2: Place Your Ships"}
+                {setupPlayer === 1 ? "Player 1: Place Your Ships" : "Player 2: Place Your Ships"}
               </p>
               <p className="text-sm text-slate-400">
                 Select a ship, then click the grid to place it
               </p>
               {placementShip && (
                 <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-full border border-slate-700">
-                  <span className="text-xs text-slate-400">
-                    Press
-                  </span>
-                  <kbd className="px-2 py-0.5 bg-slate-700 rounded text-xs font-bold text-blue-400 border border-slate-600">
-                    R
-                  </kbd>
-                  <span className="text-xs text-slate-400">
-                    to rotate
-                  </span>
+                  <span className="text-xs text-slate-400">Press</span>
+                  <kbd className="px-2 py-0.5 bg-slate-700 rounded text-xs font-bold text-blue-400 border border-slate-600">R</kbd>
+                  <span className="text-xs text-slate-400">to rotate</span>
                 </div>
               )}
             </div>
@@ -145,9 +195,7 @@ export default function Home() {
               isOpponentView={false}
               remainingShips={
                 SHIP_DEFINITIONS.length -
-                (setupPlayer === 1
-                  ? player1.ships.length
-                  : player2.ships.length)
+                (setupPlayer === 1 ? player1.ships.length : player2.ships.length)
               }
               selectedShipSize={selectedShipSize}
               isHorizontal={isHorizontal}
@@ -157,13 +205,27 @@ export default function Home() {
 
         {phase === "battle" && battleBoardProps && (
           <div className="animate-slide-in">
+            {isBotThinking && (
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full border border-slate-700">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <p className="text-sm text-slate-300 font-medium">Bot is thinking...</p>
+                </div>
+              </div>
+            )}
             <div className="text-center mb-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full border border-slate-700">
-                <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+                <div className={`h-2 w-2 rounded-full animate-pulse ${isBotThinking ? "bg-amber-400" : "bg-blue-400"}`} />
                 <p className="text-sm text-slate-300 font-medium">
-                  {isProcessing
+                  {isBotThinking
+                    ? "Bot is aiming..."
+                    : isProcessing
                     ? "Processing shot..."
-                    : `${currentPlayer === 1 ? "Player 1's Turn" : "Player 2's Turn"} — Click enemy ships to attack!`}
+                    : `${gameMode === "pvbot" && currentPlayer === 2 ? "Bot's Turn" : `Player ${currentPlayer}'s Turn`} — Click to attack!`}
                 </p>
               </div>
             </div>
@@ -171,7 +233,7 @@ export default function Home() {
               <GameBoard
                 grid={battleBoardProps.grid}
                 onCellClick={battleBoardProps.onCellClick}
-                isInteractive={battleBoardProps.isInteractive && !isProcessing}
+                isInteractive={battleBoardProps.isInteractive && !isProcessing && !isBotThinking}
                 title={battleBoardProps.title}
                 isOpponentView={battleBoardProps.isOpponentView}
                 remainingShips={battleBoardProps.remainingShips}
@@ -208,12 +270,46 @@ export default function Home() {
           </div>
         )}
 
-        <div className="mt-6 text-center">
-          <button onClick={resetGame} className="btn-danger">
-            Reset Game
-          </button>
-        </div>
+        {phase === "gameover" && (
+          <div className="mt-6 text-center">
+            <button onClick={resetGame} className="btn-danger">
+              New Game
+            </button>
+          </div>
+        )}
+
+        {(phase === "setup" || phase === "battle") && (
+          <div className="mt-6 text-center">
+            {!showConfirmAbandon ? (
+              <button
+                onClick={() => setShowConfirmAbandon(true)}
+                className="btn-danger"
+              >
+                Abandon Game
+              </button>
+            ) : (
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-sm text-slate-400">Are you sure?</span>
+                <button
+                  onClick={() => {
+                    setShowConfirmAbandon(false);
+                    resetGame();
+                  }}
+                  className="btn-danger text-sm py-1.5 px-3"
+                >
+                  Yes, Abandon
+                </button>
+                <button
+                  onClick={() => setShowConfirmAbandon(false)}
+                  className="btn-secondary text-sm py-1.5 px-3"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }

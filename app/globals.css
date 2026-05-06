@@ -5,12 +5,67 @@
 :root {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-cell-empty: #2563eb;
+  --bg-cell-ship: #64748b;
+  --bg-cell-hit: #ef4444;
+  --bg-cell-miss: #bfdbfe;
+  --bg-cell-sunk: #7f1d1d;
   --accent-blue: #3b82f6;
   --accent-green: #10b981;
   --accent-red: #ef4444;
   --accent-yellow: #f59e0b;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
+  --border-color: #334155;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #e2e8f0;
+  --bg-card: #ffffff;
+  --bg-cell-empty: #3b82f6;
+  --bg-cell-ship: #94a3b8;
+  --bg-cell-hit: #ef4444;
+  --bg-cell-miss: #93c5fd;
+  --bg-cell-sunk: #fca5a5;
+  --accent-blue: #2563eb;
+  --accent-green: #059669;
+  --accent-red: #dc2626;
+  --accent-yellow: #d97706;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --border-color: #cbd5e1;
+}
+
+[data-theme="light"] body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+[data-theme="light"] .board-cell-empty {
+  background-color: var(--bg-cell-empty) !important;
+}
+
+[data-theme="light"] .board-cell-ship {
+  background-color: var(--bg-cell-ship) !important;
+}
+
+[data-theme="light"] .board-cell-hit {
+  background-color: var(--bg-cell-hit) !important;
+}
+
+[data-theme="light"] .board-cell-miss {
+  background-color: var(--bg-cell-miss) !important;
+}
+
+[data-theme="light"] .board-cell-sunk {
+  background-color: var(--bg-cell-sunk) !important;
 }
 
 body {
@@ -18,6 +73,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 @layer components {
@@ -180,6 +236,50 @@ body {
 @keyframes scale-in {
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+.hit-text {
+  animation: explode 0.4s ease-out;
+}
+
+.miss-text {
+  animation: miss-fade 2s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .board-cell {
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+    min-width: 30px;
+    min-height: 30px;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+
+  h1, h2 {
+    font-size: clamp(1.25rem, 5vw, 2rem);
+  }
+
+  button, .btn-primary, .btn-secondary, .btn-danger {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 375px) {
+  .board-cell {
+    font-size: 0.75rem;
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 .hit-text {

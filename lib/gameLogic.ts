@@ -3,6 +3,8 @@ import {
   Player,
   Ship,
   CellState,
+  GameMode,
+  BotDifficulty,
 } from "./types";
 import { BOARD_SIZE as SIZE, SHIP_DEFINITIONS } from "./constants";
 
@@ -19,20 +21,28 @@ export function createPlayer(id: 1 | 2, name: string): Player {
     grid: createEmptyGrid(),
     ships: [],
     shots: [],
+    hits: 0,
     ready: false,
   };
 }
 
-export function createInitialGameState(): GameState {
+export function createInitialGameState(
+  mode: GameMode = "pvp",
+  botDifficulty?: BotDifficulty
+): GameState {
+  const player2Name = mode === "pvbot" ? "Bot" : "Player 2";
   return {
     phase: "setup",
     currentPlayer: 1,
     players: {
       player1: createPlayer(1, "Player 1"),
-      player2: createPlayer(2, "Player 2"),
+      player2: createPlayer(2, player2Name),
     },
     winner: null,
     setupPlayer: 1,
+    mode,
+    botDifficulty,
+    shotsHistory: [],
   };
 }
 
@@ -132,11 +142,14 @@ export function processShot(
   }
 
   attacker.shots.push([row, col]);
+  if (!newState.shotsHistory) newState.shotsHistory = [];
   let hit = false;
 
   if (target.grid[row][col] === "ship") {
     hit = true;
+    attacker.hits = (attacker.hits || 0) + 1;
     target.grid[row][col] = "hit";
+    newState.shotsHistory.push({ player: attackerId, row, col, hit: true, timestamp: Date.now() });
     const hitShip = target.ships.find((ship: Ship) =>
       ship.positions.some(([r, c]: [number, number]) => r === row && c === col)
     );
@@ -158,6 +171,7 @@ export function processShot(
     return { newState, hit, gameOver: false };
   } else {
     target.grid[row][col] = "miss";
+    newState.shotsHistory.push({ player: attackerId, row, col, hit: false, timestamp: Date.now() });
     return { newState, hit, gameOver: false };
   }
 }
@@ -184,3 +198,59 @@ export function getRemainingShips(player: Player): number {
       )
   ).length;
 }
+
+export function autoPlaceShips(grid: CellState[][], ships: { id: string; size: number }[]): { grid: CellState[][]; ships: Ship[] } | null {
+  const maxAttempts = 1000;
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    const newGrid = createEmptyGrid();
+    const placedShips: Ship[] = [];
+    let valid = true;
+
+    for (const shipDef of ships) {
+      let shipPlaced = false;
+      let shipAttempts = 0;
+
+      while (!shipPlaced && shipAttempts < 100) {
+        const isHorizontal = Math.random() >= 0.5;
+        const maxRow = isHorizontal ? SIZE : SIZE - shipDef.size;
+        const maxCol = isHorizontal ? SIZE - shipDef.size : SIZE;
+
+        if (maxRow <= 0 || maxCol <= 0) {
+          shipAttempts++;
+          continue;
+        }
+
+        const row = Math.floor(Math.random() * maxRow);
+        const col = Math.floor(Math.random() * maxCol);
+
+        if (canPlaceShip(newGrid, shipDef.size, row, col, isHorizontal)) {
+          for (let i = 0; i < shipDef.size; i++) {
+            if (isHorizontal) {
+              newGrid[row][col + i] = "ship";
+            } else {
+              newGrid[row + i][col] = "ship";
+            }
+          }
+          placedShips.push(createShip(shipDef.id, shipDef.size, row, col, isHorizontal));
+          shipPlaced = true;
+        }
+        shipAttempts++;
+      }
+
+      if (!shipPlaced) {
+        valid = false;
+        break;
+      }
+    }
+
+    if (valid && placedShips.length === ships.length) {
+      return { grid: newGrid, ships: placedShips };
+    }
+    attempts++;
+  }
+
+  return null;
+}
+
