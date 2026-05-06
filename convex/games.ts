@@ -242,3 +242,25 @@ export const startBattle = mutation({
     return true;
   },
 });
+
+export const abandonGame = mutation({
+  args: {
+    gameId: v.id("games"),
+    playerNum: v.union(v.literal(1), v.literal(2)),
+  },
+  handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (!game) throw new Error("Game not found");
+
+    const winner = args.playerNum === 1 ? 2 : 1;
+    const winnerId = winner === 1 ? game.player1Id : game.player2Id;
+
+    await ctx.db.patch(args.gameId, {
+      status: "completed",
+      winner,
+      winnerId,
+      abandonedBy: args.playerNum,
+    });
+    return { winner };
+  },
+});

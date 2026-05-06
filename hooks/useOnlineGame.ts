@@ -74,6 +74,7 @@ export function useOnlineGame() {
   const updateLastSeen = useMutation(api.games.updateLastSeen);
   const checkDisconnects = useMutation(api.games.checkDisconnects);
   const startBattleMutation = useMutation(api.games.startBattle);
+  const abandonGameMutation = useMutation(api.games.abandonGame);
 
   // Local state for ship placement
   const [localShips, setLocalShips] = useState<Ship[]>([]);
@@ -264,6 +265,12 @@ export function useOnlineGame() {
     setPausedAt(null);
   }, [setGameId, setPlayerNum, setInviteCodePersisted]);
 
+  // Abandon game (opponent wins)
+  const abandonGame = useCallback(async () => {
+    if (!gameId || !playerNum) return;
+    await abandonGameMutation({ gameId: gameId as any, playerNum: playerNum as 1 | 2 });
+  }, [gameId, playerNum, abandonGameMutation]);
+
   // Check if it's the current player's turn
   const isMyTurn = onlineState?.currentTurn === playerNum;
 
@@ -290,6 +297,7 @@ export function useOnlineGame() {
     placeShips,
     takeShot,
     startBattle,
+    abandonGame,
     resetOnlineGame,
     localShips,
     setLocalShips,

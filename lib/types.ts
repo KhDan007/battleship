@@ -98,4 +98,5 @@ export interface OnlineGameState {
   gameStartTime?: number;
   player1Username?: string;
   player2Username?: string;
+  abandonedBy?: 1 | 2;
 }

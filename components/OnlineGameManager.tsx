@@ -28,6 +28,7 @@ interface OnlineGameManagerProps {
     placeShips: (ships: Ship[], grid: CellState[][]) => void;
     takeShot: (row: number, col: number) => void;
     startBattle: () => void;
+    abandonGame: () => void;
     resetOnlineGame: () => void;
     localShips: Ship[];
     setLocalShips: (ships: Ship[]) => void;
@@ -75,6 +76,7 @@ export default function OnlineGameManager({
     placeShips: onlinePlaceShips,
     takeShot: onlineTakeShot,
     startBattle: onlineStartBattle,
+    abandonGame: onlineAbandonGame,
     resetOnlineGame,
     localShips: onlineLocalShips,
     setLocalShips: setOnlineLocalShips,
@@ -144,9 +146,13 @@ export default function OnlineGameManager({
   }, [setGameMode]);
 
   const handleBackFromOnline = useCallback(() => {
-    resetOnlineGame();
-    setShowModeSelector(true);
-  }, [resetOnlineGame]);
+    if (onlineGameId && onlineState?.status === "battle" || onlineState?.status === "setup") {
+      onlineAbandonGame();
+    } else {
+      resetOnlineGame();
+      setShowModeSelector(true);
+    }
+  }, [onlineGameId, onlineState?.status, onlineAbandonGame, resetOnlineGame]);
 
   // No gameId yet - show lobby or mode selector
   if (!onlineGameId) {
@@ -382,17 +388,31 @@ export default function OnlineGameManager({
     const iWon = (winner === 1 && onlinePlayerNum === 1) || (winner === 2 && onlinePlayerNum === 2);
     const player1Name = onlineState.player1Username || "Player 1";
     const player2Name = onlineState.player2Username || "Player 2";
+    const opponentAbandoned = onlineState.abandonedBy && onlineState.abandonedBy !== onlinePlayerNum;
 
     return (
-      <>
-        <Navigation onOpenStatsHistory={onOpenStatsHistory} />
-        <div className="max-w-4xl mx-auto p-4 sm:p-6">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          onClick={handleBackFromOnline}
+        />
+        <div className="relative w-full max-w-4xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-scale-in overflow-y-auto max-h-[90vh]">
+          <button
+            onClick={handleBackFromOnline}
+            className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
           <div className="text-center mb-6 animate-slide-in">
             <h2 className="text-3xl font-bold text-white mb-2">
-              {iWon ? "🎉 You Win!" : "💀 You Lose!"}
+              {opponentAbandoned ? "🎉 You Win! (Opponent Left)" : iWon ? "🎉 You Win!" : "💀 You Lose!"}
             </h2>
             <p className="text-slate-400">
-              {iWon ? "Congratulations!" : "Better luck next time!"}
+              {opponentAbandoned ? "Opponent abandoned the game!" : iWon ? "Congratulations!" : "Better luck next time!"}
             </p>
           </div>
 
@@ -421,7 +441,7 @@ export default function OnlineGameManager({
             </button>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 

@@ -60,6 +60,7 @@ export default defineSchema({
     player2LastSeen: v.optional(v.number()),
     pausedAt: v.optional(v.number()),
     gameStartTime: v.optional(v.number()),
+    abandonedBy: v.optional(v.union(v.literal(1), v.literal(2))),
   }).index("by_player1", ["player1Id"])
     .index("by_player2", ["player2Id"])
     .index("by_invite_code", ["inviteCode"])
