@@ -4,16 +4,16 @@ import React, { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
-import { useOnlineGame } from "../hooks/useOnlineGame";
 
 interface OnlineLobbyProps {
   onBack: () => void;
   initialCode?: string;
+  hostGame: (userId?: string, guestId?: string) => Promise<{ code: string; link: string }>;
+  joinGame: (code: string, userId?: string, guestId?: string) => Promise<any>;
 }
 
-const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode }) => {
+const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame, joinGame }) => {
   const { user } = useAuth();
-  const { hostGame, joinGame } = useOnlineGame();
   const [activeTab, setActiveTab] = useState<"host" | "join">(
     initialCode ? "join" : "host"
   );

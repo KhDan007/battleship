@@ -11,7 +11,7 @@ import { GameMode } from "../../lib/types";
 export default function JoinPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { joinGame, gameId } = useOnlineGame();
+  const { hostGame, joinGame, gameId } = useOnlineGame();
   const { setGameMode } = useGameState();
   const [code, setCode] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -26,9 +26,7 @@ export default function JoinPage() {
 
   useEffect(() => {
     if (gameId) {
-      // Set game mode to online so the main page enters the online flow
       setGameMode("online" as GameMode);
-      // Game joined successfully, redirect to main page
       router.push("/");
     }
   }, [gameId, router, setGameMode]);
@@ -37,13 +35,11 @@ export default function JoinPage() {
     if (!code) return;
     try {
       await joinGame(code, user?.id, undefined);
-      // Redirect will happen via the useEffect above
     } catch (err: any) {
       setError(err.message || "Failed to join game");
     }
   };
 
-  // Auto-join if code is present
   useEffect(() => {
     if (code && user) {
       handleJoin();
@@ -56,7 +52,7 @@ export default function JoinPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <OnlineLobby onBack={handleBack} initialCode={code || undefined} />
+      <OnlineLobby onBack={handleBack} initialCode={code || undefined} hostGame={hostGame} joinGame={joinGame} />
     </div>
   );
 }

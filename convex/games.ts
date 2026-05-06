@@ -118,11 +118,13 @@ export const recordShot = mutation({
     const shotsField = args.player === 1 ? "shotsPlayer1" : "shotsPlayer2";
     const hitsField = args.player === 1 ? "hitsPlayer1" : "hitsPlayer2";
 
+    const nextTurn = args.hit ? args.player : (args.player === 1 ? 2 : 1);
+
     const update: any = {
       shots,
       [shotsField]: (game[shotsField] || 0) + 1,
       [hitsField]: (game[hitsField] || 0) + (args.hit ? 1 : 0),
-      currentTurn: args.player === 1 ? 2 : 1,
+      currentTurn: nextTurn,
     };
 
     const targetNum = args.player === 1 ? 2 : 1;
@@ -146,7 +148,7 @@ export const recordShot = mutation({
     }
 
     await ctx.db.patch(args.gameId, update);
-    return { gameOver: allSunk, winner: allSunk ? args.player : null };
+    return { gameOver: allSunk, winner: allSunk ? args.player : null, hit: args.hit };
   },
 });
 

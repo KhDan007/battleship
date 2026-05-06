@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useGameState } from "../hooks/useGameState";
 import GameBoard from "./GameBoard";
 import ShipPlacement from "./ShipPlacement";
@@ -25,6 +25,8 @@ interface OnlineGameManagerProps {
     inviteCode: string | null;
     isPaused: boolean;
     pausedAt: number | null;
+    hostGame: (userId?: string, guestId?: string) => Promise<{ code: string; link: string }>;
+    joinGame: (code: string, userId?: string, guestId?: string) => Promise<any>;
     placeShips: (ships: Ship[], grid: CellState[][]) => void;
     takeShot: (row: number, col: number) => void;
     startBattle: () => void;
@@ -59,6 +61,9 @@ export default function OnlineGameManager({
   } = useGameState();
 
   const [isBotPlacing, setIsBotPlacing] = useState(false);
+  const [shotResult, setShotResult] = useState<"hit" | "miss" | null>(null);
+  const [onlineIsProcessing, setOnlineIsProcessing] = useState(false);
+  const prevShotCountRef = useRef(0);
 
   const {
     gameId: onlineGameId,
@@ -67,6 +72,8 @@ export default function OnlineGameManager({
     inviteCode: onlineInviteCode,
     isPaused,
     pausedAt,
+    hostGame,
+    joinGame,
     placeShips: onlinePlaceShips,
     takeShot: onlineTakeShot,
     startBattle: onlineStartBattle,
@@ -99,6 +106,24 @@ export default function OnlineGameManager({
     }
   }, [onlineState?.status, onlineState?.player1Ships, onlineState?.player2Ships, onlineStartBattle]);
 
+  // Watch for shot results to show hit/miss feedback
+  useEffect(() => {
+    const shots = onlineState?.shots || [];
+    if (shots.length > prevShotCountRef.current && onlinePlayerNum) {
+      const latestShot = shots[shots.length - 1];
+      if (latestShot.player === onlinePlayerNum) {
+        setShotResult(latestShot.hit ? "hit" : "miss");
+        setOnlineIsProcessing(true);
+        // Clear after animation plays (2s for hit/miss animation)
+        setTimeout(() => {
+          setShotResult(null);
+          setOnlineIsProcessing(false);
+        }, 2000);
+      }
+    }
+    prevShotCountRef.current = shots.length;
+  }, [onlineState?.shots, onlinePlayerNum]);
+
   // Online: Auto-place ships
   const handleOnlineAutoPlace = useCallback(() => {
     const result = autoPlaceShips(onlineLocalGrid || [], SHIP_DEFINITIONS);
@@ -110,9 +135,10 @@ export default function OnlineGameManager({
 
   // Online: Handle shot
   const handleOnlineShot = useCallback((row: number, col: number) => {
-    if (!onlineIsMyTurn || !onlineState || onlineState.status !== "battle") return;
+    if (!onlineIsMyTurn || !onlineState || onlineState.status !== "battle" || onlineIsProcessing) return;
+    setOnlineIsProcessing(true);
     onlineTakeShot(row, col);
-  }, [onlineIsMyTurn, onlineState, onlineTakeShot]);
+  }, [onlineIsMyTurn, onlineState, onlineTakeShot, onlineIsProcessing]);
 
   const handleStartOnline = useCallback(() => {
     setShowModeSelector(false);
@@ -141,7 +167,11 @@ export default function OnlineGameManager({
               disabled={false}
             />
           ) : (
-            <OnlineLobby onBack={() => setShowModeSelector(true)} />
+            <OnlineLobby
+              onBack={() => setShowModeSelector(true)}
+              hostGame={hostGame}
+              joinGame={joinGame}
+            />
           )}
         </div>
       </>
@@ -296,11 +326,19 @@ export default function OnlineGameManager({
             </div>
           </div>
 
+          {shotResult && (
+            <div className="text-center mb-4 animate-slide-in">
+              <p className={`text-lg font-bold ${shotResult === "hit" ? "text-red-400" : "text-blue-400"}`}>
+                {shotResult === "hit" ? "Hit! Go again!" : "Miss!"}
+              </p>
+            </div>
+          )}
+
           <div className="animate-slide-in">
             <GameBoard
               grid={onlineOpponentGrid || []}
               onCellClick={handleOnlineShot}
-              isInteractive={onlineIsMyTurn && !isProcessing}
+              isInteractive={onlineIsMyTurn && !onlineIsProcessing}
               title={`${opponentName}'s Fleet — Attack!`}
               isOpponentView={true}
               remainingShips={onlineOpponentShips ? onlineOpponentShips.filter((s: any) =>
