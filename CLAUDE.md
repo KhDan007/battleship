@@ -23,8 +23,13 @@ npx convex dev       # Start Convex backend (needed for full functionality)
 ## Architecture
 
 ### App Structure
-- `app/` - Next.js App Router (layout.tsx, page.tsx, globals.css, join/[code]/page.tsx)
+- `app/` - Next.js App Router (layout.tsx, page.tsx, globals.css, join/page.tsx)
 - `components/` - Client-side React components for game UI
+  - `OnlineGameManager.tsx` - Manages all online multiplayer game phases (waiting, setup, battle, completed)
+  - `LocalGameManager.tsx` - Manages all local game modes (pvp, pvbot) with all game phases
+  - `OnlineLobby.tsx` - Lobby UI with Host/Join tabs, invite code display, copy-to-clipboard
+  - `WaitingRoom.tsx` - Shown while waiting for opponent to join or place ships
+  - `DisconnectNotification.tsx` - Overlay shown when opponent disconnects
 - `hooks/` - Custom React hooks (useGameState manages all game logic, useOnlineGame for multiplayer)
 - `lib/` - Pure utility functions (game logic, constants, types, bot AI, storage)
 - `contexts/` - React contexts (AuthContext, ThemeContext)
@@ -39,6 +44,7 @@ All game state is managed through `hooks/useGameState.ts` which handles:
 - Game persistence via localStorage (`lib/storage.ts`)
 - Convex backend sync for authenticated users (game history, stats)
 - Bot turns are managed reactively via a `pendingAction` state and `useEffect` to avoid setTimeout chain issues
+- `gameMode` is persisted to localStorage (`battleship_gameMode`) to survive page navigations (critical for online mode flow after redirect from `/join`)
 
 ### Online Multiplayer (`hooks/useOnlineGame.ts`)
 
@@ -87,13 +93,19 @@ Real-time multiplayer using Convex backend (no separate WebSocket server):
 - `convex/stats.ts` - Update user stats mutations (records `winner` field)
 - Generated types in `convex/_generated/`
 
+### Page Architecture (after refactoring)
+
+- **`app/page.tsx`** - Simplified routing (~50 lines): handles auth check, determines online vs local mode, renders appropriate manager component
+- **`components/OnlineGameManager.tsx`** - Manages all online multiplayer phases: waiting room, ship placement, battle, and game over
+- **`components/LocalGameManager.tsx`** - Manages all local game modes (pvp, pvbot): setup, battle, and game over phases
+
 ### Online Multiplayer Components
 
-- **`components/OnlineLobby.tsx` (NEW)** - Lobby UI with Host/Join tabs, invite code display, copy-to-clipboard, and join-by-code
-- **`components/WaitingRoom.tsx` (NEW)** - Shown while waiting for opponent to join or place ships
-- **`components/DisconnectNotification.tsx` (NEW)** - Overlay shown when opponent disconnects, with 60s countdown timer
-- **`app/join/page.tsx` (NEW)** - Join page that reads `?code=XXXXXX` from URL, auto-joins game, redirects to `/` on success
-- **`hooks/useOnlineGame.ts` (NEW)** - Central hook for online multiplayer: manages gameId/playerNum via localStorage, Convex real-time sync, heartbeat, disconnect detection, ship placement, and shot handling
+- **`components/OnlineLobby.tsx`** - Lobby UI with Host/Join tabs, invite code display, copy-to-clipboard. Uses `useOnlineGame()` hook for proper state persistence
+- **`components/WaitingRoom.tsx`** - Shown while waiting for opponent to join (status: "waiting")
+- **`components/DisconnectNotification.tsx`** - Overlay shown when opponent disconnects, with 60s countdown timer
+- **`app/join/page.tsx`** - Join page that reads `?code=XXXXXX` from URL, auto-joins game, sets `gameMode` to "online", redirects to `/` on success
+- **`hooks/useOnlineGame.ts`** - Central hook for online multiplayer: manages gameId/playerNum via localStorage, Convex real-time sync, heartbeat, disconnect detection, ship placement, and shot handling
 
 ### Bot AI (`lib/botAI.ts`)
 
@@ -135,3 +147,16 @@ Implements three difficulty levels with distinct strategies:
 - Board size is 10x10 (defined in `lib/constants.ts` as `BOARD_SIZE`)
 - In PvBot mode, the bot is internally represented as player 2; the UI shows "Bot" instead of "Player 2"
 - Game history fix: `winner` field (1 or 2) was added to `games` table to correctly show Wins/Losses (never Draws - Battleship has no draws)
+
+## Recent Fixes (2026-05-06)
+
+1. **Online multiplayer 404 error**: `OnlineLobby.tsx` was redirecting to `/play/online?gameId=...` which doesn't exist. Fixed to redirect to `/` and properly use `useOnlineGame()` hook for state persistence.
+
+2. **Game stuck on "Waiting for opponent"**: The condition in `app/page.tsx` was catching ALL non-battle/non-completed statuses (including "setup"), preventing ship placement UI from rendering. Fixed to only show `WaitingRoom` when `status === "waiting"`.
+
+3. **Game mode not persisting across navigation**: `useGameState.ts` wasn't persisting `gameMode` to localStorage. Added persistence so `gameMode` survives page navigations (critical for online mode flow after redirect from `/join`).
+
+4. **Code refactoring**: Split 670-line `app/page.tsx` into modular components:
+   - `app/page.tsx` - Simplified to ~50 lines (auth check + routing)
+   - `components/OnlineGameManager.tsx` - All online multiplayer game phases
+   - `components/LocalGameManager.tsx` - All local game modes (pvp, pvbot)
