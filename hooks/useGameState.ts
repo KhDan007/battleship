@@ -37,7 +37,22 @@ export function useGameState() {
   const [mounted, setMounted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [shotResult, setShotResult] = useState<"hit" | "miss" | null>(null);
-  const [gameMode, setGameMode] = useState<GameMode>("pvp");
+  const [gameMode, _setGameMode] = useState<GameMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("battleship_gameMode");
+      if (saved === "pvp" || saved === "pvbot" || saved === "online") {
+        return saved;
+      }
+    }
+    return "pvp";
+  });
+
+  const setGameMode = useCallback((mode: GameMode) => {
+    _setGameMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("battleship_gameMode", mode);
+    }
+  }, []);
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("medium");
   const [showModeSelector, setShowModeSelector] = useState(true);
   const [isBotThinking, setIsBotThinking] = useState(false);

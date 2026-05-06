@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import React, { useState } from "react";
+import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useOnlineGame } from "../hooks/useOnlineGame";
 
 interface OnlineLobbyProps {
   onBack: () => void;
@@ -12,6 +13,7 @@ interface OnlineLobbyProps {
 
 const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode }) => {
   const { user } = useAuth();
+  const { hostGame, joinGame } = useOnlineGame();
   const [activeTab, setActiveTab] = useState<"host" | "join">(
     initialCode ? "join" : "host"
   );
@@ -23,8 +25,6 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode }) => {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
-  const createInvite = useMutation(api.invites.createInvite);
-  const acceptInvite = useMutation(api.invites.acceptInvite);
   const getInvite = useQuery(
     api.invites.getInviteByCode,
     joinCode.length === 6 ? { code: joinCode.toUpperCase() } : "skip"
@@ -34,11 +34,9 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode }) => {
     setIsCreating(true);
     setError("");
     try {
-      const result = await createInvite({
-        userId: user?.id as any,
-      });
+      const result = await hostGame(user?.id, undefined);
       setGeneratedCode(result.code);
-      setInviteLink(`${window.location.origin}/join?code=${result.code}`);
+      setInviteLink(result.link);
     } catch (err: any) {
       setError(err.message || "Failed to create game");
     } finally {
@@ -51,12 +49,8 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode }) => {
     setIsJoining(true);
     setError("");
     try {
-      const result = await acceptInvite({
-        code: joinCode.toUpperCase(),
-        userId: user?.id as any,
-      });
-      // The parent component will handle navigation based on the result
-      window.location.href = `/play/online?gameId=${result.gameId}`;
+      await joinGame(joinCode, user?.id, undefined);
+      window.location.href = "/";
     } catch (err: any) {
       setError(err.message || "Failed to join game");
     } finally {
