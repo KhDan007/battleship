@@ -13,7 +13,7 @@ import Navigation from "./Navigation";
 import GameAnalysis from "./GameAnalysis";
 import { GameMode } from "../lib/types";
 import { SHIP_DEFINITIONS } from "../lib/constants";
-import { autoPlaceShips } from "../lib/gameLogic";
+import { autoPlaceShips, createEmptyGrid } from "../lib/gameLogic";
 import { OnlineGameState, Ship, CellState } from "../lib/types";
 
 interface OnlineGameManagerProps {
@@ -129,7 +129,7 @@ export default function OnlineGameManager({
 
   // Online: Auto-place ships
   const handleOnlineAutoPlace = useCallback(() => {
-    const result = autoPlaceShips(onlineLocalGrid || [], SHIP_DEFINITIONS);
+    const result = autoPlaceShips(onlineLocalGrid || createEmptyGrid(), SHIP_DEFINITIONS);
     if (result) {
       setOnlineLocalShips(result.ships);
       setOnlineLocalGrid(result.grid);
@@ -240,8 +240,8 @@ export default function OnlineGameManager({
                 phase: "setup",
                 currentPlayer: onlinePlayerNum || 1,
                 players: {
-                  player1: { name: player1Name, grid: onlineMyGrid || [], ships: onlineMyShips || [], hits: 0, shots: [], ready: false },
-                  player2: { name: player2Name, grid: onlineOpponentGrid || [], ships: onlineOpponentShips || [], hits: 0, shots: [], ready: false },
+                  player1: { name: player1Name, grid: onlineMyGrid || createEmptyGrid(), ships: onlineMyShips || [], hits: 0, shots: [], ready: false },
+                  player2: { name: player2Name, grid: onlineOpponentGrid || createEmptyGrid(), ships: onlineOpponentShips || [], hits: 0, shots: [], ready: false },
                 },
                 winner: null,
                 setupPlayer: onlinePlayerNum || 1,
@@ -281,7 +281,7 @@ export default function OnlineGameManager({
             )}
 
             <GameBoard
-              grid={onlineLocalGrid || []}
+              grid={onlineLocalGrid || createEmptyGrid()}
               onCellClick={() => {}}
               isInteractive={false}
               title={`${myName}'s Fleet`}
@@ -327,8 +327,8 @@ export default function OnlineGameManager({
                 phase: "battle",
                 currentPlayer: onlineState?.currentTurn || 1,
                 players: {
-                  player1: { name: player1Name, grid: onlineState?.player1Grid || [], ships: onlineState?.player1Ships || [], hits: 0, shots: [], ready: true },
-                  player2: { name: player2Name, grid: onlineState?.player2Grid || [], ships: onlineState?.player2Ships || [], hits: 0, shots: [], ready: true },
+                  player1: { name: player1Name, grid: onlineState?.player1Grid || createEmptyGrid(), ships: onlineState?.player1Ships || [], hits: 0, shots: [], ready: true },
+                  player2: { name: player2Name, grid: onlineState?.player2Grid || createEmptyGrid(), ships: onlineState?.player2Ships || [], hits: 0, shots: [], ready: true },
                 },
                 winner: onlineState?.winner || null,
                 setupPlayer: 1,
@@ -362,7 +362,7 @@ export default function OnlineGameManager({
             {/* Player's own board */}
             <div>
               <GameBoard
-                grid={onlineMyGrid || []}
+                grid={onlineMyGrid || createEmptyGrid()}
                 onCellClick={() => {}}
                 isInteractive={false}
                 title={`${myName}'s Fleet`}
@@ -378,7 +378,7 @@ export default function OnlineGameManager({
             {/* Opponent's board (attackable) */}
             <div>
               <GameBoard
-                grid={onlineOpponentGrid || []}
+                grid={onlineOpponentGrid || createEmptyGrid()}
                 onCellClick={handleOnlineShot}
                 isInteractive={onlineIsMyTurn && !onlineIsProcessing}
                 title={`${opponentName}'s Fleet — Attack!`}
@@ -438,7 +438,7 @@ export default function OnlineGameManager({
 
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 animate-slide-in">
             <GameBoard
-              grid={onlineState?.player1Grid || []}
+              grid={onlineState?.player1Grid || createEmptyGrid()}
               onCellClick={() => {}}
               isInteractive={false}
               title={`${player1Name}'s Fleet`}
@@ -446,7 +446,7 @@ export default function OnlineGameManager({
               remainingShips={0}
             />
             <GameBoard
-              grid={onlineState?.player2Grid || []}
+              grid={onlineState?.player2Grid || createEmptyGrid()}
               onCellClick={() => {}}
               isInteractive={false}
               title={`${player2Name}'s Fleet`}
