@@ -2,7 +2,7 @@
 
 A full-featured, multiplayer Battleship game built with **Next.js 14**, **React**, **Tailwind CSS**, **Convex** (backend), and **OpenAI** (AI analysis). Play locally against a friend or AI, challenge someone online with invite codes, then analyze your games with a probability heatmap and AI coach.
 
-[Play Live](https://battleship.vercel.app) *(update with your actual URL after deploy)*
+[Play Live](https://battleship-flax-one.vercel.app/)
 
 ---
 
