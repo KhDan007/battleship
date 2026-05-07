@@ -127,7 +127,7 @@ export function processShot(
   targetPlayerId: 1 | 2,
   row: number,
   col: number
-): { newState: GameState; hit: boolean; gameOver: boolean } {
+): { newState: GameState; hit: boolean; gameOver: boolean; shipHit?: string; shipSunk?: boolean } {
   const newState = JSON.parse(JSON.stringify(gameState));
   const attackerId = gameState.currentPlayer;
   const attacker =
@@ -144,6 +144,8 @@ export function processShot(
   attacker.shots.push([row, col]);
   if (!newState.shotsHistory) newState.shotsHistory = [];
   let hit = false;
+  let shipHit: string | undefined;
+  let shipSunk = false;
 
   if (target.grid[row][col] === "ship") {
     hit = true;
@@ -154,10 +156,12 @@ export function processShot(
       ship.positions.some(([r, c]: [number, number]) => r === row && c === col)
     );
     if (hitShip) {
+      shipHit = hitShip.name;
       const allHit = hitShip.positions.every(
         ([r, c]: [number, number]) => target.grid[r][c] === "hit"
       );
       if (allHit) {
+        shipSunk = true;
         hitShip.positions.forEach(([r, c]: [number, number]) => {
           target.grid[r][c] = "sunk";
         });
@@ -166,9 +170,9 @@ export function processShot(
     if (checkWin(target)) {
       newState.phase = "gameover";
       newState.winner = attackerId;
-      return { newState, hit, gameOver: true };
+      return { newState, hit, gameOver: true, shipHit, shipSunk };
     }
-    return { newState, hit, gameOver: false };
+    return { newState, hit, gameOver: false, shipHit, shipSunk };
   } else {
     target.grid[row][col] = "miss";
     newState.shotsHistory.push({ player: attackerId, row, col, hit: false, timestamp: Date.now() });

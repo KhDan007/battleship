@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { OnlineGameState, Ship, CellState } from "../lib/types";
+import { OnlineGameState, Ship, CellState, GameState } from "../lib/types";
 import { createEmptyGrid, autoPlaceShips } from "../lib/gameLogic";
+import { generateNotation } from "../lib/notation";
 
 const STORAGE_KEY_GAME_ID = "battleship_online_gameId";
 const STORAGE_KEY_PLAYER_NUM = "battleship_online_playerNum";
 const STORAGE_KEY_INVITE_CODE = "battleship_online_inviteCode";
+const NOTATION_TEMP_KEY = "battleship_last_notation";
 
 export function useOnlineGame() {
   const [gameId, _setGameId] = useState<string | null>(() => {
@@ -75,6 +77,7 @@ export function useOnlineGame() {
   const checkDisconnects = useMutation(api.games.checkDisconnects);
   const startBattleMutation = useMutation(api.games.startBattle);
   const abandonGameMutation = useMutation(api.games.abandonGame);
+  const saveNotationMutation = useMutation(api.games.saveNotation);
 
   // Local state for ship placement
   const [localShips, setLocalShips] = useState<Ship[]>([]);
@@ -127,6 +130,53 @@ export function useOnlineGame() {
       setPausedAt(null);
     }
   }, [onlineState?.status, onlineState?.pausedAt]);
+
+  // Generate and save notation when game completes
+  useEffect(() => {
+    if (!onlineState || onlineState.status !== "completed") return;
+    if (!onlineState.shots || onlineState.shots.length === 0) return;
+
+    // Build a GameState-like object from onlineState for notation generation
+    const gameState: GameState = {
+      phase: "gameover",
+      currentPlayer: onlineState.currentTurn || 1,
+      players: {
+        player1: {
+          id: 1,
+          name: onlineState.player1Username || "Player 1",
+          grid: onlineState.player1Grid || createEmptyGrid(),
+          ships: onlineState.player1Ships || [],
+          shots: [],
+          hits: 0,
+          ready: true,
+        },
+        player2: {
+          id: 2,
+          name: onlineState.player2Username || "Player 2",
+          grid: onlineState.player2Grid || createEmptyGrid(),
+          ships: onlineState.player2Ships || [],
+          shots: [],
+          hits: 0,
+          ready: true,
+        },
+      },
+      winner: onlineState.winner || null,
+      setupPlayer: 1,
+      mode: "online",
+      shotsHistory: onlineState.shots || [],
+    };
+
+    const notation = generateNotation(gameState);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(NOTATION_TEMP_KEY, notation);
+    }
+    // Also save to DB if we have a gameId
+    if (gameId) {
+      saveNotationMutation({ gameId: gameId as any, notation }).catch((err) => {
+        console.error("Failed to save notation:", err);
+      });
+    }
+  }, [onlineState?.status, onlineState?.shots, gameId, saveNotationMutation]);
 
   // Host: Create game and invite
   const hostGame = useCallback(

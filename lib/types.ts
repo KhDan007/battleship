@@ -73,6 +73,7 @@ export interface GameRecord {
   hitsPlayer2: number;
   durationSeconds: number;
   createdAt: string;
+  notation?: string;
 }
 
 export interface OnlineGameState {

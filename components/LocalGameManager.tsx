@@ -8,6 +8,7 @@ import ShipPlacement from "./ShipPlacement";
 import GameStatus from "./GameStatus";
 import GameModeSelector from "./GameModeSelector";
 import Navigation from "./Navigation";
+import GameAnalysis from "./GameAnalysis";
 import { GameMode, BotDifficulty } from "../lib/types";
 import { SHIP_DEFINITIONS } from "../lib/constants";
 
@@ -42,11 +43,14 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
     isAutoPlacing,
     autoPlace,
     stats,
+    getLastNotation,
   } = useGameState();
 
   const { user } = useAuth();
   const [showConfirmAbandon, setShowConfirmAbandon] = useState(false);
   const [isBotPlacing, setIsBotPlacing] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisNotation, setAnalysisNotation] = useState<string | null>(null);
 
   const handleConfirm = useCallback(() => {
     if (gameMode === "pvbot" && gameState?.setupPlayer === 1) {
@@ -59,6 +63,20 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
       confirmPlacement();
     }
   }, [gameMode, gameState?.setupPlayer, confirmPlacement]);
+
+  const handleViewAnalysis = useCallback(() => {
+    const notation = getLastNotation();
+    if (notation) {
+      setAnalysisNotation(notation);
+      setShowAnalysis(true);
+    }
+  }, [getLastNotation]);
+
+  const handleExitAnalysis = useCallback(() => {
+    setShowAnalysis(false);
+    setAnalysisNotation(null);
+    resetGame();
+  }, [resetGame]);
 
   const selectedShipSize = placementShip
     ? SHIP_DEFINITIONS.find((s) => s.id === placementShip)?.size
@@ -267,9 +285,15 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
         )}
 
         {phase === "gameover" && (
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center flex items-center justify-center gap-3">
+            <button onClick={resetGame} className="btn-primary">
+              Play Again
+            </button>
+            <button onClick={handleViewAnalysis} className="btn-secondary">
+              View Analysis
+            </button>
             <button onClick={resetGame} className="btn-danger">
-              New Game
+              Main Menu
             </button>
           </div>
         )}
@@ -306,6 +330,10 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
           </div>
         )}
       </div>
+
+      {showAnalysis && analysisNotation && (
+        <GameAnalysis notation={analysisNotation} onExit={handleExitAnalysis} />
+      )}
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 import { GameRecord } from "../lib/types";
+import GameAnalysis from "./GameAnalysis";
 
 type FilterType = "all" | "pvp" | "pvbot-easy" | "pvbot-medium" | "pvbot-hard";
 
@@ -15,6 +16,24 @@ interface GameHistoryProps {
 const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
   const games = useQuery(api.games.listByUser, { userId: userId as Id<"users"> });
   const [filter, setFilter] = useState<FilterType>("all");
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisNotation, setAnalysisNotation] = useState<string | null>(null);
+
+  const handleAnalyze = (notation: string | undefined) => {
+    if (notation) {
+      setAnalysisNotation(notation);
+      setShowAnalysis(true);
+    }
+  };
+
+  const handleExitAnalysis = () => {
+    setShowAnalysis(false);
+    setAnalysisNotation(null);
+  };
+
+  if (showAnalysis && analysisNotation) {
+    return <GameAnalysis notation={analysisNotation} onExit={handleExitAnalysis} />;
+  }
 
   if (games === undefined) {
     return (
@@ -79,7 +98,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
   return (
     <div className="max-w-2xl mx-auto animate-slide-in">
       <h2 className="text-2xl font-bold dark:text-white text-slate-900 text-center mb-6">
-        📜 Game History
+        Game History
       </h2>
 
       {/* Filter tabs */}
@@ -145,6 +164,16 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
                   </div>
                 </div>
               </div>
+              {game.notation && (
+                <div className="mt-3 pt-3 border-t dark:border-slate-700/50 border-slate-200/50">
+                  <button
+                    onClick={() => handleAnalyze(game.notation)}
+                    className="text-xs font-medium px-3 py-1.5 rounded-lg dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                  >
+                    Analyze
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}

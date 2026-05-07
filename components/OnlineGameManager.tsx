@@ -10,6 +10,7 @@ import WaitingRoom from "./WaitingRoom";
 import DisconnectNotification from "./DisconnectNotification";
 import GameModeSelector from "./GameModeSelector";
 import Navigation from "./Navigation";
+import GameAnalysis from "./GameAnalysis";
 import { GameMode } from "../lib/types";
 import { SHIP_DEFINITIONS } from "../lib/constants";
 import { autoPlaceShips } from "../lib/gameLogic";
@@ -62,6 +63,8 @@ export default function OnlineGameManager({
   const [isBotPlacing, setIsBotPlacing] = useState(false);
   const [shotResult, setShotResult] = useState<"hit" | "miss" | null>(null);
   const [onlineIsProcessing, setOnlineIsProcessing] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [analysisNotation, setAnalysisNotation] = useState<string | null>(null);
   const prevShotCountRef = useRef(0);
 
   const {
@@ -153,6 +156,23 @@ export default function OnlineGameManager({
       setShowModeSelector(true);
     }
   }, [onlineGameId, onlineState?.status, onlineAbandonGame, resetOnlineGame]);
+
+  const handleViewAnalysis = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const notation = localStorage.getItem("battleship_last_notation");
+      if (notation) {
+        setAnalysisNotation(notation);
+        setShowAnalysis(true);
+      }
+    }
+  }, []);
+
+  const handleExitAnalysis = useCallback(() => {
+    setShowAnalysis(false);
+    setAnalysisNotation(null);
+    resetOnlineGame();
+    setShowModeSelector(true);
+  }, [resetOnlineGame]);
 
   // No gameId yet - show lobby or mode selector
   if (!onlineGameId) {
@@ -435,14 +455,24 @@ export default function OnlineGameManager({
             />
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center flex items-center justify-center gap-3">
+            <button onClick={handleBackFromOnline} className="btn-primary">
+              Play Again
+            </button>
+            <button onClick={handleViewAnalysis} className="btn-secondary">
+              View Analysis
+            </button>
             <button onClick={handleBackFromOnline} className="btn-danger">
-              New Game
+              Main Menu
             </button>
           </div>
         </div>
       </div>
     );
+  }
+
+  if (showAnalysis && analysisNotation) {
+    return <GameAnalysis notation={analysisNotation} onExit={handleExitAnalysis} />;
   }
 
   return null;

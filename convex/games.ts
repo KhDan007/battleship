@@ -37,6 +37,15 @@ export const listByUser = query({
   },
 });
 
+export const getGameById = query({
+  args: { gameId: v.id("games") },
+  handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (!game) return null;
+    return game;
+  },
+});
+
 export const getOnlineGame = query({
   args: { gameId: v.id("games") },
   handler: async (ctx, args) => {
@@ -262,5 +271,20 @@ export const abandonGame = mutation({
       abandonedBy: args.playerNum,
     });
     return { winner };
+  },
+});
+
+export const saveNotation = mutation({
+  args: {
+    gameId: v.id("games"),
+    notation: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const game = await ctx.db.get(args.gameId);
+    if (!game) throw new Error("Game not found");
+    await ctx.db.patch(args.gameId, {
+      notation: args.notation,
+    });
+    return true;
   },
 });

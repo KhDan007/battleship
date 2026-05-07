@@ -23,7 +23,10 @@ import {
 } from "../lib/gameLogic";
 import { getBotShot } from "../lib/botAI";
 import { saveGameState, loadGameState, clearGameState } from "../lib/storage";
+import { generateNotation } from "../lib/notation";
 import { SHIP_DEFINITIONS } from "../lib/constants";
+
+const NOTATION_TEMP_KEY = "battleship_last_notation";
 
 type PendingAction =
   | { type: "bot_turn"; state: GameState }
@@ -74,7 +77,11 @@ export function useGameState() {
   const recordGameMutation = useMutation(api.stats.recordGame);
 
   // Must be defined before the useEffect that references it
-  const saveGameToHistory = useCallback(async (state: GameState) => {
+  const saveGameToHistory = useCallback(async (state: GameState, notation?: string) => {
+    // Always store notation locally for immediate post-game analysis
+    if (notation && typeof window !== "undefined") {
+      localStorage.setItem(NOTATION_TEMP_KEY, notation);
+    }
     if (!user) return;
     try {
       const duration = state.gameStartTime
@@ -95,6 +102,7 @@ export function useGameState() {
         hitsPlayer2: state.players.player2.hits || 0,
         winnerId: state.winner === 1 ? user.id as Id<"users"> : undefined,
         winner: state.winner as 1 | 2,
+        notation,
       });
     } catch (error) {
       console.error("Failed to save game history:", error);
@@ -122,7 +130,8 @@ export function useGameState() {
 
         if (result.gameOver) {
           setGameState(result.newState);
-          saveGameToHistory(result.newState);
+          const notation = generateNotation(result.newState);
+          saveGameToHistory(result.newState, notation);
           setIsProcessing(false);
           setShotResult(null);
           setPendingAction({ type: "none" });
@@ -187,6 +196,9 @@ export function useGameState() {
 
   const resetGame = useCallback(() => {
     clearGameState();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(NOTATION_TEMP_KEY);
+    }
     setGameState(null);
     setPlacementShip(null);
     setIsProcessing(false);
@@ -381,7 +393,8 @@ export function useGameState() {
 
       if (result.gameOver) {
         setGameState(result.newState);
-        saveGameToHistory(result.newState);
+        const notation = generateNotation(result.newState);
+        saveGameToHistory(result.newState, notation);
         return;
       }
 
@@ -440,6 +453,11 @@ export function useGameState() {
     [gameState]
   );
 
+  const getLastNotation = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(NOTATION_TEMP_KEY);
+  }, []);
+
   return {
     gameState,
     placementShip,
@@ -467,5 +485,6 @@ export function useGameState() {
     confirmPlacement,
     removeShip,
     stats,
+    getLastNotation,
   };
 }
