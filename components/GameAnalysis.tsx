@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { parseNotation, reconstructBoards, ParsedNotation } from "../lib/notation";
 import MoveList from "./MoveList";
+import AIFeedbackPanel from "./AIFeedbackPanel";
+import AnalysisChatbot from "./AnalysisChatbot";
 import { CellState } from "../lib/types";
 
 interface GameAnalysisProps {
@@ -113,6 +115,7 @@ export default function GameAnalysis({ notation, onExit }: GameAnalysisProps) {
   const [currentMove, setCurrentMove] = useState(-1);
   const [showP1Board, setShowP1Board] = useState(true);
   const [showP2Board, setShowP2Board] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState<"moves" | "insights" | "chat">("moves");
 
   useEffect(() => {
     const result = parseNotation(notation);
@@ -277,20 +280,70 @@ export default function GameAnalysis({ notation, onExit }: GameAnalysisProps) {
           </div>
         </div>
 
-        {/* Move list sidebar */}
-        <div className="w-full lg:w-64 shrink-0 flex flex-col">
-          <h3 className="text-sm font-semibold mb-2 dark:text-slate-300 text-slate-600">
-            Move List
-          </h3>
-          <div className="flex-1 min-h-0">
-            <MoveList
-              moves={parsed.moves}
-              currentMove={currentMove}
-              onSelectMove={goToMove}
-            />
+        {/* Sidebar */}
+        <div className="w-full lg:w-72 shrink-0 flex flex-col min-h-0">
+          {/* Tabs */}
+          <div className="flex items-center mb-2 border-b dark:border-slate-700 border-slate-200">
+            <button
+              onClick={() => setSidebarTab("moves")}
+              className={`flex-1 pb-2 text-sm font-semibold transition-colors relative ${
+                sidebarTab === "moves"
+                  ? "dark:text-blue-400 text-blue-600"
+                  : "dark:text-slate-400 text-slate-500 hover:dark:text-slate-300 hover:text-slate-700"
+              }`}
+            >
+              Move List
+              {sidebarTab === "moves" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setSidebarTab("insights")}
+              className={`flex-1 pb-2 text-sm font-semibold transition-colors relative ${
+                sidebarTab === "insights"
+                  ? "dark:text-purple-400 text-purple-600"
+                  : "dark:text-slate-400 text-slate-500 hover:dark:text-slate-300 hover:text-slate-700"
+              }`}
+            >
+              AI Insights
+              {sidebarTab === "insights" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500 rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setSidebarTab("chat")}
+              className={`flex-1 pb-2 text-sm font-semibold transition-colors relative ${
+                sidebarTab === "chat"
+                  ? "dark:text-emerald-400 text-emerald-600"
+                  : "dark:text-slate-400 text-slate-500 hover:dark:text-slate-300 hover:text-slate-700"
+              }`}
+            >
+              Chat
+              {sidebarTab === "chat" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full" />
+              )}
+            </button>
+          </div>
+
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {sidebarTab === "moves" ? (
+              <MoveList
+                moves={parsed.moves}
+                currentMove={currentMove}
+                onSelectMove={goToMove}
+              />
+            ) : sidebarTab === "insights" ? (
+              <AIFeedbackPanel parsed={parsed} currentMove={currentMove} />
+            ) : (
+              <AnalysisChatbot parsed={parsed} currentMove={currentMove} />
+            )}
           </div>
           <div className="mt-2 text-xs dark:text-slate-500 text-slate-400">
-            Use arrow keys to navigate. Esc to exit.
+            {sidebarTab === "moves"
+              ? "Use arrow keys to navigate. Esc to exit."
+              : sidebarTab === "insights"
+              ? "Insights update as you step through the game."
+              : "Ask the AI coach anything about this game."}
           </div>
         </div>
       </div>
