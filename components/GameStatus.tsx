@@ -28,25 +28,23 @@ const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset, gameMode, b
   };
 
   const getStatusColor = () => {
-    if (phase === "gameover") return "text-emerald-400";
-    if (phase === "battle") return "text-blue-400";
-    return "text-slate-300";
+    if (phase === "gameover") return "dark:text-emerald-400 text-emerald-600";
+    if (phase === "battle") return "dark:text-blue-400 text-blue-600";
+    return "dark:text-slate-300 text-slate-600";
   };
 
   return (
     <div className="card p-5 max-w-2xl mx-auto">
       <div className="flex items-center justify-center gap-2 mb-3">
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
-          ${phase === "gameover"
-            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+        <span className={`status-badge ${phase === "gameover"
+            ? "status-badge-success"
             : phase === "battle"
-              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-              : "bg-slate-700 text-slate-300 border border-slate-600"
+              ? "status-badge-active"
+              : "status-badge-default"
           }`}
         >
-          <span className={`h-1.5 w-1.5 rounded-full animate-pulse
-            ${phase === "gameover" ? "bg-emerald-400" :
-              phase === "battle" ? "bg-blue-400" : "bg-slate-400"}`}
+          <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${phase === "gameover" ? "dark:bg-emerald-400 bg-emerald-500" :
+              phase === "battle" ? "dark:bg-blue-400 bg-blue-500" : "dark:bg-slate-400 bg-slate-500"}`}
           />
           {PHASE_LABELS[phase]}
         </span>
@@ -70,13 +68,13 @@ const GameStatus: React.FC<GameStatusProps> = ({ gameState, onReset, gameMode, b
       )}
 
       {phase === "battle" && (
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm dark:text-slate-400 text-slate-500">
           {gameMode === "pvbot" && currentPlayer === 2 ? (
             <>The bot is attacking...</>
           ) : (
             <>
               Switch seats! It's now{" "}
-              <span className="text-white font-semibold">
+              <span className="dark:text-white text-slate-900 font-semibold">
                 {gameState.players?.[`player${currentPlayer}`]?.name || `Player ${currentPlayer}`}'s
               </span>{" "}
               turn to attack

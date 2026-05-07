@@ -18,8 +18,8 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="animate-pulse text-slate-300 text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center dark:bg-slate-950 bg-slate-50">
+        <div className="animate-pulse dark:text-slate-300 text-slate-600 text-xl">Loading...</div>
       </div>
     );
   }
@@ -28,9 +28,9 @@ export default function Home() {
     return (
       <>
         <AuthModal />
-        <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">⚓ Battleship</h1>
-          <p className="text-slate-400 text-lg mb-8 text-center max-w-md">
+        <div className="min-h-screen dark:bg-slate-950 bg-slate-50 flex flex-col items-center justify-center p-4">
+          <h1 className="text-4xl sm:text-5xl font-bold dark:text-white text-slate-900 mb-4">⚓ Battleship</h1>
+          <p className="dark:text-slate-400 text-slate-500 text-lg mb-8 text-center max-w-md">
             The classic naval combat game. Sign in to track your stats and play against AI opponents.
           </p>
           <button

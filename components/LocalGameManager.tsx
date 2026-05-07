@@ -142,13 +142,13 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
           <div className="flex flex-col items-center gap-6">
             {isBotPlacing ? (
               <div className="text-center py-12">
-                <div className="inline-flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-xl border border-slate-700">
+                <div className="inline-flex items-center gap-3 px-6 py-4 dark:bg-slate-800 bg-slate-100 rounded-xl dark:border-slate-700 border-slate-200 border">
                   <div className="flex gap-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" />
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
-                  <p className="text-lg text-slate-200 font-medium">Bot is placing ships...</p>
+                  <p className="text-lg dark:text-slate-200 text-slate-700 font-medium">Bot is placing ships...</p>
                 </div>
               </div>
             ) : (
@@ -167,18 +167,18 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
               />
             )}
 
-            <div className="text-center text-slate-300">
+            <div className="text-center dark:text-slate-300 text-slate-600">
               <p className="text-lg font-semibold mb-1">
                 {setupPlayer === 1 ? "Player 1: Place Your Ships" : "Player 2: Place Your Ships"}
               </p>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm dark:text-slate-400 text-slate-500">
                 Select a ship, then click the grid to place it
               </p>
               {placementShip && (
-                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 rounded-full border border-slate-700">
-                  <span className="text-xs text-slate-400">Press</span>
-                  <kbd className="px-2 py-0.5 bg-slate-700 rounded text-xs font-bold text-blue-400 border border-slate-600">R</kbd>
-                  <span className="text-xs text-slate-400">to rotate</span>
+                <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 dark:bg-slate-800 bg-slate-100 rounded-full dark:border-slate-700 border-slate-200 border">
+                  <span className="text-xs dark:text-slate-400 text-slate-500">Press</span>
+                  <kbd className="px-2 py-0.5 dark:bg-slate-700 dark:text-blue-400 bg-slate-200 text-blue-600 dark:border-slate-600 border-slate-300 border rounded text-xs font-bold">R</kbd>
+                  <span className="text-xs dark:text-slate-400 text-slate-500">to rotate</span>
                 </div>
               )}
             </div>
@@ -203,20 +203,20 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
           <div className="animate-slide-in">
             {isBotThinking && (
               <div className="text-center mb-4">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full border border-slate-700">
+                <div className="inline-flex items-center gap-2 px-4 py-2 dark:bg-slate-800 bg-slate-100 rounded-full dark:border-slate-700 border-slate-200 border">
                   <div className="flex gap-1">
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                     <span className="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
-                  <p className="text-sm text-slate-300 font-medium">Bot is thinking...</p>
+                  <p className="text-sm dark:text-slate-300 text-slate-600 font-medium">Bot is thinking...</p>
                 </div>
               </div>
             )}
             <div className="text-center mb-4">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-full border border-slate-700`}>
+              <div className={`inline-flex items-center gap-2 px-4 py-2 dark:bg-slate-800 bg-slate-100 rounded-full dark:border-slate-700 border-slate-200 border`}>
                 <div className={`h-2 w-2 rounded-full animate-pulse ${isBotThinking ? "bg-amber-400" : "bg-blue-400"}`} />
-                <p className="text-sm text-slate-300 font-medium">
+                <p className="text-sm dark:text-slate-300 text-slate-600 font-medium">
                   {isBotThinking
                     ? "Bot is aiming..."
                     : isProcessing
@@ -235,7 +235,7 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
                 remainingShips={battleBoardProps.remainingShips}
               />
               {isProcessing && shotResult && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 rounded-xl animate-fade-in z-10">
+                <div className="absolute inset-0 flex items-center justify-center dark:bg-slate-900/80 bg-white/80 rounded-xl animate-fade-in z-10">
                   <div className={`text-6xl font-black animate-scale-in ${shotResult === "hit" ? "text-red-500" : "text-blue-400"}`}>
                     {shotResult === "hit" ? "HIT!" : "MISS!"}
                   </div>
@@ -285,7 +285,7 @@ export default function LocalGameManager({ onOpenStatsHistory }: LocalGameManage
               </button>
             ) : (
               <div className="flex items-center justify-center gap-3">
-                <span className="text-sm text-slate-400">Are you sure?</span>
+                <span className="text-sm dark:text-slate-400 text-slate-500">Are you sure?</span>
                 <button
                   onClick={() => {
                     setShowConfirmAbandon(false);

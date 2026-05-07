@@ -40,10 +40,10 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
   if (loading) {
     return (
       <div className="card p-6 max-w-2xl mx-auto animate-pulse">
-        <div className="h-8 bg-slate-700 rounded w-1/3 mb-4" />
+        <div className="h-8 dark:bg-slate-700 bg-slate-100 rounded w-1/3 mb-4" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-20 bg-slate-700 rounded" />
+            <div key={i} className="h-20 dark:bg-slate-700 bg-slate-100 rounded" />
           ))}
         </div>
       </div>
@@ -53,7 +53,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
   if (!stats) {
     return (
       <div className="card p-6 max-w-2xl mx-auto text-center">
-        <p className="text-slate-400">No statistics yet. Play some games!</p>
+        <p className="dark:text-slate-400 text-slate-500">No statistics yet. Play some games!</p>
       </div>
     );
   }
@@ -102,7 +102,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-slide-in">
-      <h2 className="text-2xl font-bold text-white text-center mb-6">
+      <h2 className="text-2xl font-bold dark:text-white text-slate-900 text-center mb-6">
         📊 Your Statistics
       </h2>
 
@@ -115,7 +115,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
               ${activeType === tab.id
                 ? tab.color === "slate"
-                  ? "bg-slate-600 text-white"
+                  ? "dark:bg-slate-600 bg-slate-700 text-white"
                   : tab.color === "blue"
                   ? "bg-blue-600 text-white"
                   : tab.color === "emerald"
@@ -123,7 +123,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
                   : tab.color === "amber"
                   ? "bg-amber-600 text-white"
                   : "bg-red-600 text-white"
-                : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                : "dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
               }`}
           >
             {tab.label}
@@ -143,7 +143,7 @@ const StatisticsDashboard: React.FC<StatisticsDashboardProps> = ({ userId }) => 
 
       {/* Overall stats from profile (always shown) */}
       <div className="card p-5 mt-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Overall Stats</h3>
+        <h3 className="text-lg font-semibold dark:text-white text-slate-900 mb-4">Overall Stats</h3>
         <div className="grid grid-cols-2 gap-4">
           <StatCard label="Total Shots" value={stats.totalShots} icon="💥" color="slate" />
           <StatCard label="Total Hits" value={stats.totalHits} icon="🔥" color="red" />
@@ -164,21 +164,21 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ label, value, icon, color }) => {
   const colorClasses: Record<string, string> = {
-    blue: "border-blue-500/30 bg-blue-500/5 text-blue-400",
-    emerald: "border-emerald-500/30 bg-emerald-500/5 text-emerald-400",
-    purple: "border-purple-500/30 bg-purple-500/5 text-purple-400",
-    amber: "border-amber-500/30 bg-amber-500/5 text-amber-400",
-    slate: "border-slate-500/30 bg-slate-500/5 text-slate-400",
-    red: "border-red-500/30 bg-red-500/5 text-red-400",
-    orange: "border-orange-500/30 bg-orange-500/5 text-orange-400",
-    cyan: "border-cyan-500/30 bg-cyan-500/5 text-cyan-400",
+    blue: "border-blue-500/30 dark:bg-blue-500/5 bg-blue-50 text-blue-400",
+    emerald: "border-emerald-500/30 dark:bg-emerald-500/5 bg-emerald-50 text-emerald-400",
+    purple: "border-purple-500/30 dark:bg-purple-500/5 bg-purple-50 text-purple-400",
+    amber: "border-amber-500/30 dark:bg-amber-500/5 bg-amber-50 text-amber-400",
+    slate: "border-slate-500/30 dark:bg-slate-500/5 bg-slate-50 text-slate-400",
+    red: "border-red-500/30 dark:bg-red-500/5 bg-red-50 text-red-400",
+    orange: "border-orange-500/30 dark:bg-orange-500/5 bg-orange-50 text-orange-400",
+    cyan: "border-cyan-500/30 dark:bg-cyan-500/5 bg-cyan-50 text-cyan-400",
   };
 
   return (
     <div className={`card p-4 border ${colorClasses[color] || colorClasses.slate}`}>
       <div className="text-2xl mb-2">{icon}</div>
-      <div className="text-2xl font-bold text-white mb-1">{value}</div>
-      <div className="text-xs text-slate-400">{label}</div>
+      <div className="text-2xl font-bold dark:text-white text-slate-900 mb-1">{value}</div>
+      <div className="text-xs dark:text-slate-400 text-slate-500">{label}</div>
     </div>
   );
 };

@@ -27,10 +27,10 @@ const StatsHistoryModal: React.FC<StatsHistoryModalProps> = ({
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-2xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
+      <div className="relative w-full max-w-2xl dark:bg-slate-800 bg-white dark:border-slate-700 border-slate-200 border rounded-2xl shadow-2xl p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 dark:text-slate-400 text-slate-500 hover:dark:text-white hover:text-slate-700 transition-colors"
           aria-label="Close"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,7 +38,7 @@ const StatsHistoryModal: React.FC<StatsHistoryModalProps> = ({
           </svg>
         </button>
 
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+        <h2 className="text-2xl font-bold dark:text-white text-slate-900 mb-6 text-center">
           {activeTab === "stats" ? "📊 Your Statistics" : "📜 Game History"}
         </h2>
 
@@ -49,7 +49,7 @@ const StatsHistoryModal: React.FC<StatsHistoryModalProps> = ({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "stats"
                 ? "bg-blue-600 text-white"
-                : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-700"
+                : "dark:bg-slate-900 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700 bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200"
             }`}
           >
             📊 Stats
@@ -59,7 +59,7 @@ const StatsHistoryModal: React.FC<StatsHistoryModalProps> = ({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "history"
                 ? "bg-blue-600 text-white"
-                : "bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-700"
+                : "dark:bg-slate-900 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700 bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200"
             }`}
           >
             📜 History

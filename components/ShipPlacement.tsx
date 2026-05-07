@@ -35,24 +35,25 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
 
   return (
     <div className="card p-5 max-w-md w-full">
-      <h3 className="text-lg font-bold mb-4 text-slate-100">
+      <h3 className="text-lg font-bold mb-4 dark:text-slate-100 text-slate-900">
         {playerName} - Place Your Ships
       </h3>
 
-      <div className="mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+      <div className="mb-4 p-3 dark:bg-slate-900/50 bg-slate-100 rounded-lg dark:border-slate-700 border-slate-200 border">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-slate-400">Orientation</span>
-          <span className="text-sm font-bold text-blue-400">
+          <span className="text-sm dark:text-slate-400 text-slate-500">Orientation</span>
+          <span className="text-sm font-bold dark:text-blue-400 text-blue-600">
             {isHorizontal ? "↔ Horizontal" : "↕ Vertical"}
           </span>
         </div>
         <button
           onClick={onToggleOrientation}
-          className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg
+          className="w-full py-2 dark:bg-slate-700 dark:hover:bg-slate-600 bg-slate-200 hover:bg-slate-300
+                     dark:text-slate-200 text-slate-700 rounded-lg
                      text-sm font-medium transition-colors duration-200
-                     border border-slate-600 hover:border-slate-500"
+                     dark:border-slate-600 border-slate-300 border"
         >
-          Press <kbd className="px-1.5 py-0.5 bg-slate-800 rounded text-xs font-bold text-blue-400">R</kbd> or click to rotate
+          Press <kbd className="px-1.5 py-0.5 dark:bg-slate-800 dark:text-blue-400 bg-slate-50 text-blue-600 dark:border-slate-600 border-slate-300 border rounded text-xs font-bold">R</kbd> or click to rotate
         </button>
       </div>
 
@@ -68,20 +69,20 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
               className={`
                 w-full p-3 rounded-lg border-2 transition-all duration-200 text-left
                 ${selectedShip === def.id
-                  ? "border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20"
-                  : "border-slate-700 bg-slate-800/50"
+                  ? "dark:border-blue-500 border-blue-600 dark:bg-blue-500/10 bg-blue-50 shadow-lg dark:shadow-blue-500/20 shadow-blue-200"
+                  : "dark:border-slate-700 border-slate-200 dark:bg-slate-800/50 bg-white"
                 }
                 ${isPlaced
                   ? "opacity-50"
-                  : "hover:border-slate-500 cursor-pointer hover:bg-slate-800"
+                  : "hover:dark:border-slate-500 hover:border-slate-300 cursor-pointer hover:dark:bg-slate-800 hover:bg-slate-50"
                 }
               `}
             >
               <div className="flex justify-between items-center mb-1.5">
-                <span className={`font-semibold ${isPlaced ? "line-through text-slate-500" : "text-slate-200"}`}>
+                <span className={`font-semibold ${isPlaced ? "line-through dark:text-slate-500 text-slate-400" : "dark:text-slate-200 text-slate-700"}`}>
                   {def.name}
                 </span>
-                <span className="text-xs text-slate-400 bg-slate-700/50 px-2 py-0.5 rounded">
+                <span className="text-xs dark:text-slate-400 text-slate-500 dark:bg-slate-700/50 bg-slate-100 px-2 py-0.5 rounded">
                   Size: {def.size}
                 </span>
               </div>
@@ -92,8 +93,8 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
                     <div
                       key={i}
                       className={`h-2.5 flex-1 rounded-sm transition-colors ${
-                        isPlaced ? "bg-slate-600" : "bg-slate-500"
-                      } ${selectedShip === def.id ? "bg-blue-500" : ""}`}
+                        isPlaced ? "dark:bg-slate-600 bg-slate-300" : "dark:bg-slate-500 bg-slate-400"
+                      } ${selectedShip === def.id ? "dark:bg-blue-500 bg-blue-600" : ""}`}
                     />
                   ))}
               </div>
@@ -105,16 +106,16 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
                         e.stopPropagation();
                         onRemoveShip(def.id);
                       }}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors font-bold"
+                      className="text-xs dark:text-red-400 text-red-600 hover:dark:text-red-300 hover:text-red-500 transition-colors font-bold"
                       aria-label={`Remove ${def.name}`}
                     >
                       ×
                     </button>
                   )}
-                  <svg className="w-3.5 h-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3.5 h-3.5 dark:text-emerald-500 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
                   </svg>
-                  <span className="text-xs text-emerald-500 font-medium">Placed</span>
+                  <span className="text-xs dark:text-emerald-500 text-emerald-600 font-medium">Placed</span>
                 </div>
               )}
             </div>
@@ -126,9 +127,10 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
         <button
           onClick={onAutoPlace}
           disabled={isAutoPlacing}
-          className="py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg
+          className="py-2.5 dark:bg-slate-700 dark:hover:bg-slate-600 bg-slate-200 hover:bg-slate-300
+                     dark:text-slate-200 text-slate-700 rounded-lg
                      text-sm font-medium transition-colors duration-200
-                     border border-slate-600 hover:border-slate-500
+                     dark:border-slate-600 border-slate-300 border
                      disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAutoPlacing ? (
@@ -157,8 +159,8 @@ const ShipPlacement: React.FC<ShipPlacementProps> = ({
       </div>
 
       <div className="mt-3 flex items-center justify-center gap-2">
-        <div className="h-1.5 w-1.5 rounded-full bg-slate-600" />
-        <p className="text-xs text-slate-500">
+        <div className="h-1.5 w-1.5 rounded-full dark:bg-slate-600 bg-slate-300" />
+        <p className="text-xs dark:text-slate-500 text-slate-400">
           {placedShips.length}/{SHIP_DEFINITIONS.length} ships placed
         </p>
       </div>

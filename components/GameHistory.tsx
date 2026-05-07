@@ -20,7 +20,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
     return (
       <div className="card p-6 max-w-2xl mx-auto animate-pulse space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-slate-700 rounded" />
+          <div key={i} className="h-16 dark:bg-slate-700 bg-slate-100 rounded" />
         ))}
       </div>
     );
@@ -29,7 +29,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
   if (games.length === 0) {
     return (
       <div className="card p-6 max-w-2xl mx-auto text-center">
-        <p className="text-slate-400">No games played yet.</p>
+        <p className="dark:text-slate-400 text-slate-500">No games played yet.</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
 
   return (
     <div className="max-w-2xl mx-auto animate-slide-in">
-      <h2 className="text-2xl font-bold text-white text-center mb-6">
+      <h2 className="text-2xl font-bold dark:text-white text-slate-900 text-center mb-6">
         📜 Game History
       </h2>
 
@@ -91,7 +91,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all
               ${filter === f.id
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
-                : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                : "dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
               }`}
           >
             {f.label}
@@ -111,8 +111,8 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
               key={game._id}
               className={`card p-4 border ${
                 won
-                  ? "border-emerald-500/30 bg-emerald-500/5"
-                  : "border-red-500/30 bg-red-500/5"
+                  ? "border-emerald-500/30 dark:bg-emerald-500/5 bg-emerald-50"
+                  : "border-red-500/30 dark:bg-red-500/5 bg-red-50"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -121,7 +121,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
                     {won ? "🏆" : "💔"}
                   </span>
                   <div>
-                    <div className="font-semibold text-white">
+                    <div className="font-semibold dark:text-white text-slate-900">
                       {game.player2IsBot ? (
                         <span className="flex items-center gap-2">
                           vs Bot {getDifficultyLabel(game.botDifficulty)}
@@ -130,7 +130,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
                         "vs Player"
                       )}
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs dark:text-slate-400 text-slate-500">
                       {formatDate(game._creationTime)}
                     </div>
                   </div>
@@ -139,7 +139,7 @@ const GameHistory: React.FC<GameHistoryProps> = ({ userId }) => {
                   <div className={`text-sm font-bold ${won ? "text-emerald-400" : "text-red-400"}`}>
                     {won ? "Won" : "Lost"}
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs dark:text-slate-400 text-slate-500">
                     {shots} shots • {accuracy}% acc
                     {game.durationSeconds && ` • ${game.durationSeconds}s`}
                   </div>

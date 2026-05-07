@@ -14,9 +14,7 @@ interface OnlineLobbyProps {
 
 const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame, joinGame }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<"host" | "join">(
-    initialCode ? "join" : "host"
-  );
+  const [activeTab, setActiveTab] = useState<"host" | "join">(initialCode ? "join" : "host");
   const [joinCode, setJoinCode] = useState(initialCode || "");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState("");
@@ -67,10 +65,10 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
   return (
     <div className="card p-6 max-w-lg w-full mx-auto mb-6 animate-slide-in">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white">Online Multiplayer</h2>
+        <h2 className="text-xl font-bold dark:text-white text-slate-900">Online Multiplayer</h2>
         <button
           onClick={onBack}
-          className="text-slate-400 hover:text-white transition-colors"
+          className="dark:text-slate-400 text-slate-500 hover:dark:text-white hover:text-slate-700 transition-colors"
         >
           ← Back
         </button>
@@ -84,7 +82,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
               className={`flex-1 py-2 rounded-lg transition-colors ${
                 activeTab === "host"
                   ? "bg-blue-600 text-white"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                  : "dark:bg-slate-800 dark:text-slate-400 bg-slate-100 text-slate-600 hover:dark:bg-slate-700 hover:bg-slate-200"
               }`}
             >
               Host Game
@@ -94,7 +92,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
               className={`flex-1 py-2 rounded-lg transition-colors ${
                 activeTab === "join"
                   ? "bg-blue-600 text-white"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                  : "dark:bg-slate-800 dark:text-slate-400 bg-slate-100 text-slate-600 hover:dark:bg-slate-700 hover:bg-slate-200"
               }`}
             >
               Join Game
@@ -105,13 +103,13 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
 
       {activeTab === "host" && !generatedCode && (
         <div className="space-y-4">
-          <p className="text-slate-400 text-sm">
+          <p className="dark:text-slate-400 text-slate-500 text-sm">
             Create a game and invite a friend to play!
           </p>
           <button
             onClick={handleHostGame}
             disabled={isCreating}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold transition-colors"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:dark:bg-slate-700 disabled:bg-slate-300 disabled:dark:text-slate-500 disabled:text-slate-400 text-white rounded-lg font-bold transition-colors"
           >
             {isCreating ? "Creating..." : "Create Game"}
           </button>
@@ -120,9 +118,9 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
 
       {generatedCode && (
         <div className="space-y-4">
-          <div className="p-4 bg-slate-800 rounded-lg text-center">
-            <p className="text-xs text-slate-500 mb-1">INVITE CODE</p>
-            <p className="text-3xl font-mono font-bold text-white tracking-widest">
+          <div className="p-4 dark:bg-slate-800 bg-slate-100 rounded-lg text-center">
+            <p className="text-xs dark:text-slate-500 text-slate-400 mb-1">INVITE CODE</p>
+            <p className="text-3xl font-mono font-bold dark:text-white text-slate-900 tracking-widest">
               {generatedCode}
             </p>
           </div>
@@ -130,20 +128,20 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
           <div className="flex gap-2">
             <button
               onClick={() => copyToClipboard(generatedCode, "code")}
-              className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm transition-colors"
+              className="flex-1 py-2 dark:bg-slate-800 dark:hover:bg-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg dark:text-white text-slate-900 text-sm transition-colors"
             >
               {copied === "code" ? "Copied!" : "Copy Code"}
             </button>
             <button
               onClick={() => copyToClipboard(inviteLink, "link")}
-              className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm transition-colors"
+              className="flex-1 py-2 dark:bg-slate-800 dark:hover:bg-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg dark:text-white text-slate-900 text-sm transition-colors"
             >
               {copied === "link" ? "Copied!" : "Copy Link"}
             </button>
           </div>
 
           <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <p className="text-sm text-amber-400 text-center">
+            <p className="text-sm text-amber-500 text-center">
               Waiting for opponent to join...
             </p>
           </div>
@@ -165,7 +163,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
       {activeTab === "join" && !generatedCode && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium dark:text-slate-300 text-slate-600 mb-2">
               Enter Invite Code
             </label>
             <input
@@ -176,10 +174,10 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
               }
               placeholder="XXXXXX"
               maxLength={6}
-              className="w-full px-4 py-3 bg-slate-800 rounded-lg border border-slate-700 text-white text-center text-2xl font-mono tracking-widest focus:border-blue-500 focus:outline-none"
+              className="input-field text-center text-2xl font-mono tracking-widest"
             />
             {joinCode.length === 6 && getInvite && (
-              <p className="mt-2 text-sm text-center">
+              <p className="mt-2 text-sm text-center dark:text-slate-400 text-slate-500">
                 {getInvite.status === "expired"
                   ? "This invite has expired"
                   : getInvite.status === "accepted"
@@ -196,7 +194,7 @@ const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack, initialCode, hostGame
           <button
             onClick={handleJoinByCode}
             disabled={joinCode.length !== 6 || isJoining}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg font-bold transition-colors"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:dark:bg-slate-700 disabled:bg-slate-300 disabled:dark:text-slate-500 disabled:text-slate-400 text-white rounded-lg font-bold transition-colors"
           >
             {isJoining ? "Joining..." : "Join Game"}
           </button>

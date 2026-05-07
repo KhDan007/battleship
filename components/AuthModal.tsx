@@ -63,10 +63,10 @@ const AuthModal: React.FC = () => {
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={() => { setShowAuthModal(false); setError(""); setSuccess(""); }}
       />
-      <div className="relative w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-scale-in">
+      <div className="relative w-full max-w-md dark:bg-slate-800 bg-white dark:border-slate-700 border-slate-200 border rounded-2xl shadow-2xl p-6 animate-scale-in">
         <button
           onClick={() => { setShowAuthModal(false); setError(""); setSuccess(""); }}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 dark:text-slate-400 text-slate-500 hover:dark:text-white hover:text-slate-700 transition-colors"
           aria-label="Close"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,10 +74,10 @@ const AuthModal: React.FC = () => {
           </svg>
         </button>
 
-        <h2 className="text-2xl font-bold text-white mb-1">
+        <h2 className="text-2xl font-bold dark:text-white text-slate-900 mb-1">
           {isSignIn ? "Welcome Back" : "Create Account"}
         </h2>
-        <p className="text-slate-400 text-sm mb-6">
+        <p className="dark:text-slate-400 text-slate-500 text-sm mb-6">
           {isSignIn ? "Sign in to save your progress" : "Join to track your stats and play against AI"}
         </p>
 
@@ -96,41 +96,41 @@ const AuthModal: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isSignIn && (
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <label className="block text-sm font-medium dark:text-slate-300 text-slate-600 mb-1.5">
                 Username
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                className="input-field"
                 placeholder="Choose a username"
                 autoFocus
               />
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium dark:text-slate-300 text-slate-600 mb-1.5">
               Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              className="input-field"
               placeholder="you@example.com"
               autoFocus={isSignIn}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            <label className="block text-sm font-medium dark:text-slate-300 text-slate-600 mb-1.5">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              className="input-field"
               placeholder="At least 6 characters"
               minLength={6}
             />

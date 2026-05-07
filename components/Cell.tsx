@@ -37,7 +37,7 @@ const Cell: React.FC<CellProps> = ({
     let base = "board-cell ";
     switch (state) {
       case "ship":
-        base += isOpponentView ? "bg-blue-600 " : "board-cell-ship ";
+        base += isOpponentView ? "board-cell-empty " : "board-cell-ship ";
         break;
       case "hit":
         base += "board-cell-hit ";
@@ -49,7 +49,7 @@ const Cell: React.FC<CellProps> = ({
         base += "board-cell-sunk ";
         break;
       default:
-        base += isInteractive ? "board-cell-empty cursor-pointer" : "bg-blue-600 ";
+        base += isInteractive ? "board-cell-empty cursor-pointer" : "board-cell-empty ";
     }
 
     if (isBattle && isInteractive) {
@@ -67,11 +67,11 @@ const Cell: React.FC<CellProps> = ({
     if (isOpponentView && state === "ship") return "";
     switch (state) {
       case "hit":
-        return <span className="hit-text text-white text-lg">💥</span>;
+        return <span className="hit-text dark:text-white text-slate-900 text-lg">💥</span>;
       case "miss":
-        return <span className="miss-text text-blue-800 text-lg">●</span>;
+        return <span className="miss-text dark:text-blue-800 text-blue-600 text-lg">●</span>;
       case "sunk":
-        return <span className="hit-text text-white text-lg">🔥</span>;
+        return <span className="hit-text dark:text-white text-slate-900 text-lg">🔥</span>;
       default:
         return "";
     }

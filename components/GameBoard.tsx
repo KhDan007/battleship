@@ -69,17 +69,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div className="card p-4 sm:p-5">
       <div className="mb-3 text-center">
-        <h2 className="text-lg sm:text-xl font-bold text-slate-100">{title}</h2>
+        <h2 className="text-lg sm:text-xl font-bold dark:text-slate-100 text-slate-900">{title}</h2>
         <div className="flex items-center justify-center gap-2 mt-1">
-          <div className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
-          <p className="text-sm text-slate-400">
+          <div className="h-2 w-2 rounded-full dark:bg-blue-400 bg-blue-500 animate-pulse" />
+          <p className="text-sm dark:text-slate-400 text-slate-500">
             Ships remaining:{" "}
-            <span className="text-white font-semibold">{remainingShips}</span>
+            <span className="dark:text-white text-slate-900 font-semibold">{remainingShips}</span>
           </p>
         </div>
       </div>
       <div className="flex justify-center">
-        <div className="inline-block bg-slate-900 p-3 rounded-lg shadow-inner border border-slate-700">
+        <div className="board-container">
           <div className="grid grid-cols-11 gap-[3px]">
             <div className="w-8 h-8" />
             {Array(SIZE)
@@ -87,7 +87,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               .map((_, i) => (
                 <div
                   key={`col-${i}`}
-                  className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-bold"
+                  className="w-8 h-8 flex items-center justify-center dark:text-slate-400 text-slate-500 text-xs font-bold"
                 >
                   {columns[i]}
                 </div>
@@ -96,7 +96,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
               .fill(0)
               .map((_, row) => (
                 <React.Fragment key={`row-${row}`}>
-                  <div className="w-8 h-8 flex items-center justify-center text-slate-400 text-xs font-bold">
+                  <div className="w-8 h-8 flex items-center justify-center dark:text-slate-400 text-slate-500 text-xs font-bold">
                     {row + 1}
                   </div>
                   {Array(SIZE)

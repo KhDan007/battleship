@@ -12,13 +12,13 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ inviteCode, playerNum, onCanc
   return (
     <div className="card p-8 max-w-md w-full mx-auto text-center animate-slide-in">
       <div className="mb-6">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-full mb-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 dark:bg-blue-500/20 bg-blue-100 rounded-full mb-4">
           <span className="text-3xl">⏳</span>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">
+        <h2 className="text-2xl font-bold dark:text-white text-slate-900 mb-2">
           Waiting for Opponent
         </h2>
-        <p className="text-slate-400">
+        <p className="dark:text-slate-400 text-slate-500">
           {playerNum === 1
             ? "Share the invite code with your friend"
             : "Joining game..."}
@@ -26,9 +26,9 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ inviteCode, playerNum, onCanc
       </div>
 
       <div className="space-y-4 mb-6">
-        <div className="p-4 bg-slate-800 rounded-lg">
-          <p className="text-xs text-slate-500 mb-1">INVITE CODE</p>
-          <p className="text-3xl font-mono font-bold text-white tracking-widest">
+        <div className="p-4 dark:bg-slate-800 bg-slate-100 rounded-lg">
+          <p className="text-xs dark:text-slate-500 text-slate-400 mb-1">INVITE CODE</p>
+          <p className="text-3xl font-mono font-bold dark:text-white text-slate-900 tracking-widest">
             {inviteCode}
           </p>
         </div>
@@ -36,7 +36,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ inviteCode, playerNum, onCanc
         <div className="flex gap-2">
           <button
             onClick={() => navigator.clipboard.writeText(inviteCode)}
-            className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm transition-colors"
+            className="flex-1 py-2 dark:bg-slate-800 dark:hover:bg-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg dark:text-white text-slate-900 text-sm transition-colors"
           >
             Copy Code
           </button>
@@ -46,7 +46,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ inviteCode, playerNum, onCanc
                 `${window.location.origin}/join?code=${inviteCode}`
               )
             }
-            className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white text-sm transition-colors"
+            className="flex-1 py-2 dark:bg-slate-800 dark:hover:bg-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg dark:text-white text-slate-900 text-sm transition-colors"
           >
             Copy Link
           </button>
@@ -69,7 +69,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ inviteCode, playerNum, onCanc
 
       <button
         onClick={onCancel}
-        className="text-slate-400 hover:text-white text-sm transition-colors"
+        className="dark:text-slate-400 text-slate-500 hover:dark:text-white hover:text-slate-700 text-sm transition-colors"
       >
         Cancel
       </button>

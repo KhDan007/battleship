@@ -249,13 +249,13 @@ export default function OnlineGameManager({
               />
             ) : (
               <div className="text-center py-12">
-                <div className="inline-flex items-center gap-3 px-6 py-4 bg-slate-800 rounded-xl border border-slate-700">
+                <div className="inline-flex items-center gap-3 px-6 py-4 dark:bg-slate-800 bg-slate-100 rounded-xl dark:border-slate-700 border-slate-200 border">
                   <div className="flex gap-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" />
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
-                  <p className="text-lg text-slate-200 font-medium">Waiting for {opponentName} to place ships...</p>
+                  <p className="text-lg dark:text-slate-200 text-slate-700 font-medium">Waiting for {opponentName} to place ships...</p>
                 </div>
               </div>
             )}
@@ -321,10 +321,10 @@ export default function OnlineGameManager({
 
           <div className="text-center mb-4">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${
-              onlineIsMyTurn ? "bg-blue-500/10 border-blue-500" : "bg-slate-800 border-slate-700"
+              onlineIsMyTurn ? "dark:bg-blue-500/10 bg-blue-50 dark:border-blue-500/30 border-blue-200" : "dark:bg-slate-800 bg-slate-100 dark:border-slate-700 border-slate-200"
             }`}>
-              <div className={`h-2 w-2 rounded-full ${onlineIsMyTurn ? "bg-blue-400 animate-pulse" : "bg-slate-500"}`} />
-              <p className="text-sm text-slate-300 font-medium">
+              <div className={`h-2 w-2 rounded-full ${onlineIsMyTurn ? "bg-blue-400 animate-pulse" : "dark:bg-slate-500 bg-slate-400"}`} />
+              <p className="text-sm dark:text-slate-300 text-slate-600 font-medium">
                 {onlineIsMyTurn ? `Your Turn (${myName}) — Click to attack!` : `${opponentName}'s Turn...`}
               </p>
             </div>
@@ -332,7 +332,7 @@ export default function OnlineGameManager({
 
           {shotResult && (
             <div className="text-center mb-4 animate-slide-in">
-              <p className={`text-lg font-bold ${shotResult === "hit" ? "text-red-400" : "text-blue-400"}`}>
+              <p className={`text-lg font-bold ${shotResult === "hit" ? "text-red-500" : "text-blue-400"}`}>
                 {shotResult === "hit" ? "Hit! Go again!" : "Miss!"}
               </p>
             </div>
@@ -393,13 +393,13 @@ export default function OnlineGameManager({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          className="absolute inset-0 dark:bg-black/70 bg-black/50 backdrop-blur-sm"
           onClick={handleBackFromOnline}
         />
-        <div className="relative w-full max-w-4xl bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 animate-scale-in overflow-y-auto max-h-[90vh]">
+        <div className="relative w-full max-w-4xl dark:bg-slate-800 bg-white dark:border-slate-700 border-slate-200 border rounded-2xl shadow-2xl p-6 animate-scale-in overflow-y-auto max-h-[90vh]">
           <button
             onClick={handleBackFromOnline}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            className="absolute top-4 right-4 dark:text-slate-400 text-slate-500 hover:dark:text-white hover:text-slate-700 transition-colors"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,10 +408,10 @@ export default function OnlineGameManager({
           </button>
 
           <div className="text-center mb-6 animate-slide-in">
-            <h2 className="text-3xl font-bold text-white mb-2">
+            <h2 className="text-3xl font-bold dark:text-white text-slate-900 mb-2">
               {opponentAbandoned ? "🎉 You Win! (Opponent Left)" : iWon ? "🎉 You Win!" : "💀 You Lose!"}
             </h2>
-            <p className="text-slate-400">
+            <p className="dark:text-slate-400 text-slate-500">
               {opponentAbandoned ? "Opponent abandoned the game!" : iWon ? "Congratulations!" : "Better luck next time!"}
             </p>
           </div>

@@ -60,10 +60,13 @@ Real-time multiplayer using Convex backend (no separate WebSocket server):
   - Players take turns shooting; `recordShot` mutation updates both players' views
   - **Hit = go again**: Turn stays same on hit, switches only on miss (backend `recordShot` mutation preserves `currentTurn` on hit)
   - **Hit/miss animation**: `OnlineGameManager` uses `shotResult` and `onlineIsProcessing` states with `useEffect` watching `onlineState?.shots` to show "Hit! Go again!" or "Miss!" feedback for 2000ms
+  - **Both boards shown**: During online battle, BOTH player's own board AND opponent's board are displayed in a grid layout (player's board non-interactive on left, opponent's attackable board on right - responsive: side-by-side on desktop, stacked on mobile)
 - **Heartbeat**: Every 5s, `updateLastSeen` mutation keeps player "alive"
-- **Disconnect handling**: 
+- **Disconnect/Abandon handling**: 
   - >15s since last seen → game pauses (`status: "paused"`)
   - >60s since last seen → opponent wins by forfeit
+  - **Abandon Game**: When a player clicks "Abandon Game", `abandonGame` mutation immediately awards win to the other player in real-time
+  - `abandonedBy` field tracks who abandoned; game over popup shows "You Win! (Opponent Left)" when opponent abandoned
   - Reconnect within 60s → game resumes (`status: "battle"`)
 - **Game phases**: `"waiting"` → `"setup"` → `"battle"` → `"completed"` (with `"paused"` possible during battle)
 - **Usernames**: `getOnlineGame` Convex query fetches and returns `player1Username` and `player2Username`; UI displays actual usernames instead of "Player 1"/"Player 2"
@@ -90,28 +93,33 @@ Real-time multiplayer using Convex backend (no separate WebSocket server):
 - `convex/schema.ts` - Defines users, profiles (stats), games, and invites tables
   - `games` table has `winner` field (1 or 2) to track which player won
   - `winnerId` stores the user ID of the winner (for PvP), undefined when bot wins
-  - **New fields for online multiplayer**: `status` ("waiting"|"setup"|"battle"|"paused"|"completed"), `player1Ships`, `player2Ships`, `player1Grid`, `player2Grid`, `shots`, `currentTurn`, `player1LastSeen`, `player2LastSeen`, `pausedAt`, `inviteCode`, `player1GuestId`, `player2GuestId`
+  - **New fields for online multiplayer**: `status` ("waiting"|"setup"|"battle"|"paused"|"completed"), `player1Ships`, `player2Ships`, `player1Grid`, `player2Grid`, `shots`, `currentTurn`, `player1LastSeen`, `player2LastSeen`, `pausedAt`, `inviteCode`, `player1GuestId`, `player2GuestId`, `abandonedBy` (tracks who abandoned the game)
   - **New `invites` table**: `code` (6-char), `createdBy`, `createdByGuestId`, `targetUsername`, `targetUserId`, `gameId`, `status` ("pending"|"accepted"|"expired"), `expiresAt`
-- `convex/auth.ts` - Sign up/in mutations (stores password in plain text - dev only); `getUserByUsername` query
-- `convex/games.ts` - Save game mutations (supports `winner` field); **New**: `getOnlineGame` (returns `player1Username`/`player2Username`), `updatePlayerShips`, `recordShot` (preserves `currentTurn` on hit so player goes again; switches only on miss), `updateLastSeen`, `checkDisconnects`, `startBattle`
+- `convex/auth.ts` - Sign up/in mutations with user-friendly error messages:
+  - **Duplicate checks**: Blocks signup if email already registered ("This email is already registered. Try signing in instead.") or username already taken ("This username is already taken. Please choose a different one.")
+  - **Sign in errors**: "Invalid email or password. Please check your credentials and try again."
+  - `getUserByUsername` query
+- `convex/games.ts` - Save game mutations (supports `winner` field); **New**: `getOnlineGame` (returns `player1Username`/`player2Username`), `updatePlayerShips`, `recordShot` (preserves `currentTurn` on hit so player goes again; switches only on miss), `updateLastSeen`, `checkDisconnects`, `startBattle`, `abandonGame` (awards win to other player when one abandons)
 - `convex/invites.ts` (NEW) - `createInvite`, `getInviteByCode`, `getPendingInvitesForUser`, `acceptInvite`, `cleanupExpiredInvites`
 - `convex/stats.ts` - Update user stats mutations (records `winner` field)
 - Generated types in `convex/_generated/`
 
 ### Page Architecture (after refactoring)
 
-- **`app/page.tsx`** - Simplified routing (~50 lines): handles auth check, determines online vs local mode, renders appropriate manager component
-- **`components/OnlineGameManager.tsx`** - Manages all online multiplayer phases: waiting room, ship placement, battle, and game over
+- **`app/page.tsx`** - Simplified routing: handles auth check, determines online vs local mode, renders appropriate manager component, manages StatsHistoryModal state
+- **`components/OnlineGameManager.tsx`** - Manages all online multiplayer phases: waiting room, ship placement, battle (with both boards shown), and game over (as modal popup)
 - **`components/LocalGameManager.tsx`** - Manages all local game modes (pvp, pvbot): setup, battle, and game over phases
+- **`components/StatsHistoryModal.tsx`** (NEW) - Modal popup with tabs for Stats and History, accessible during ALL game modes via button in Navigation (next to UserMenu), closes on outside click or X button
 
 ### Online Multiplayer Components
 
 - **`components/OnlineLobby.tsx`** - Lobby UI with Host/Join tabs, invite code display, copy-to-clipboard. Receives `hostGame` and `joinGame` as props from parent's `useOnlineGame()` hook instance (NOT its own instance) to ensure state persistence
 - **`components/WaitingRoom.tsx`** - Shown while waiting for opponent to join (status: "waiting")
 - **`components/DisconnectNotification.tsx`** - Overlay shown when opponent disconnects, with 60s countdown timer
+- **`components/StatsHistoryModal.tsx`** (NEW) - Modal popup with Stats/History tabs, accessible from Navigation during all game modes
 - **`app/join/page.tsx`** - Join page that reads `?code=XXXXXX` from URL, auto-joins game, sets `gameMode` to "online", redirects to `/` on success
-- **`hooks/useOnlineGame.ts`** - Central hook for online multiplayer: manages gameId/playerNum via localStorage, Convex real-time sync, heartbeat, disconnect detection, ship placement, and shot handling
-- **`components/OnlineGameManager.tsx`** - Manages all online phases; includes `shotResult` and `onlineIsProcessing` states for hit/miss animation, `useEffect` watches `onlineState?.shots` to detect shot results
+- **`hooks/useOnlineGame.ts`** - Central hook for online multiplayer: manages gameId/playerNum via localStorage, Convex real-time sync, heartbeat, disconnect/abandon detection, ship placement, shot handling, `abandonGame` mutation
+- **`components/OnlineGameManager.tsx`** - Manages all online phases; includes `shotResult` and `onlineIsProcessing` states for hit/miss animation, `useEffect` watches `onlineState?.shots` to detect shot results, shows both boards in battle, game over as modal popup with abandon detection
 
 ### Bot AI (`lib/botAI.ts`)
 
@@ -174,3 +182,29 @@ Implements three difficulty levels with distinct strategies:
 7. **Turn switching on hit instead of miss**: Updated `recordShot` Convex mutation to NOT switch `currentTurn` on hit. Player keeps shooting until they miss. Turn only switches after a miss, matching local game behavior.
 
 8. **Show actual usernames instead of "Player 1"/"Player 2"**: Updated `getOnlineGame` Convex query to fetch and return `player1Username` and `player2Username`. Added fields to `OnlineGameState` interface. Updated `OnlineGameManager` and `GameStatus` to display actual usernames throughout the UI.
+
+## Recent Fixes (2026-05-07)
+
+1. **User-friendly auth error messages**: Improved error messages in `convex/auth.ts` and `contexts/AuthContext.tsx`:
+   - "This email is already registered. Try signing in instead." (was: "Email already registered")
+   - "This username is already taken. Please choose a different one." (NEW - was missing)
+   - "Invalid email or password. Please check your credentials and try again." (was: "Invalid email or password")
+
+2. **Duplicate email/username check on signup**: Added `existingUsername` check in `convex/auth.ts` `signUp` mutation to block signup if username is already taken. Previously only email was checked.
+
+3. **Show both boards in online multiplayer**: Modified `OnlineGameManager.tsx` battle phase to display BOTH player's own board AND opponent's board in a responsive grid layout (side-by-side on desktop, stacked on mobile). Player's board is non-interactive; opponent's board is clickable for attacks. This change ONLY affects online mode.
+
+4. **Stats/History as popup modal**: Converted stats and history from tab-based navigation to a popup modal:
+   - Created `components/StatsHistoryModal.tsx` - modal with Stats/History tabs, closes on outside click or X button
+   - Removed tab navigation from `components/Navigation.tsx`, replaced with single button next to UserMenu
+   - Modal is accessible during ALL game modes (including during active games)
+   - Updated `app/page.tsx` to manage modal state
+   - Removed `activeTab` and `onTabChange` props from `LocalGameManager.tsx` and `OnlineGameManager.tsx`
+
+5. **Opponent abandon/disconnect = win**: Added robust abandon/disconnect handling:
+   - Added `abandonGame` mutation in `convex/games.ts` - awards win to other player in real-time
+   - Added `abandonedBy` field to `convex/schema.ts` and `lib/types.ts` to track who abandoned
+   - Updated `hooks/useOnlineGame.ts` to expose `abandonGame` function
+   - `OnlineGameManager.tsx` now calls `abandonGame` when user clicks "Abandon Game" (instead of just resetting local state)
+   - Game over screen is now a proper modal popup with specific messaging: "You Win! (Opponent Left)" when opponent abandoned
+   - Disconnect handling already existed in `checkDisconnects` - >60s disconnect = opponent wins by forfeit
