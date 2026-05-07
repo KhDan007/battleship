@@ -10,44 +10,51 @@ interface GameAnalysisProps {
   onExit: () => void;
 }
 
-function AnalysisCell({
-  state,
-  showShips,
-}: {
-  state: CellState;
-  showShips: boolean;
-}) {
-  const displayState = state === "ship" && !showShips ? "empty" : state;
-
+function AnalysisCell({ state }: { state: CellState }) {
   const baseClass =
-    "w-full aspect-square rounded-sm flex items-center justify-center text-xs font-bold transition-colors";
+    "w-full h-full rounded-sm flex items-center justify-center text-xs font-bold";
 
-  switch (displayState) {
+  switch (state) {
     case "ship":
       return (
-        <div className={`${baseClass} dark:bg-slate-600 bg-slate-400 dark:border-slate-500 border-slate-300 border`} />
+        <div
+          className={`${baseClass} bg-slate-500 border-2 border-slate-400 dark:bg-slate-500 dark:border-slate-400`}
+          title="Ship"
+        />
       );
     case "hit":
       return (
-        <div className={`${baseClass} dark:bg-red-900/60 bg-red-100 dark:border-red-500/50 border-red-300 border`}>
-          <span className="text-red-500">x</span>
+        <div
+          className={`${baseClass} bg-red-100 border border-red-400 dark:bg-red-950/60 dark:border-red-500/60`}
+          title="Hit"
+        >
+          <span className="text-red-600 dark:text-red-400">×</span>
         </div>
       );
     case "miss":
       return (
-        <div className={`${baseClass} dark:bg-blue-900/30 bg-blue-50 dark:border-blue-500/30 border-blue-200 border`}>
-          <span className="text-blue-400">o</span>
+        <div
+          className={`${baseClass} bg-blue-50 border border-blue-300 dark:bg-blue-950/30 dark:border-blue-500/30`}
+          title="Miss"
+        >
+          <span className="text-blue-400 dark:text-blue-500">·</span>
         </div>
       );
     case "sunk":
       return (
-        <div className={`${baseClass} dark:bg-red-950 bg-red-200 dark:border-red-600 border-red-400 border`}>
-          <span className="text-red-600">*</span>
+        <div
+          className={`${baseClass} bg-red-200 border-2 border-red-500 dark:bg-red-900/80 dark:border-red-400`}
+          title="Sunk"
+        >
+          <span className="text-red-700 dark:text-red-300">✱</span>
         </div>
       );
     default:
       return (
-        <div className={`${baseClass} dark:bg-slate-800/50 bg-slate-50 dark:border-slate-700/50 border-slate-200/50 border`} />
+        <div
+          className={`${baseClass} bg-sky-50/50 border border-sky-100 dark:bg-slate-800/40 dark:border-slate-700/40`}
+          title="Empty"
+        />
       );
   }
 }
@@ -55,12 +62,10 @@ function AnalysisCell({
 function AnalysisBoard({
   grid,
   title,
-  showShips,
   visible,
 }: {
   grid: CellState[][];
   title: string;
-  showShips: boolean;
   visible: boolean;
 }) {
   if (!visible) return null;
@@ -93,7 +98,7 @@ function AnalysisBoard({
             </div>
             {row.map((cell, cIdx) => (
               <div key={cIdx} className="w-6 h-6">
-                <AnalysisCell state={cell} showShips={showShips} />
+                <AnalysisCell state={cell} />
               </div>
             ))}
           </div>
@@ -106,7 +111,6 @@ function AnalysisBoard({
 export default function GameAnalysis({ notation, onExit }: GameAnalysisProps) {
   const [parsed, setParsed] = useState<ParsedNotation | null>(null);
   const [currentMove, setCurrentMove] = useState(-1);
-  const [showShips, setShowShips] = useState(true);
   const [showP1Board, setShowP1Board] = useState(true);
   const [showP2Board, setShowP2Board] = useState(true);
 
@@ -192,16 +196,7 @@ export default function GameAnalysis({ notation, onExit }: GameAnalysisProps) {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {/* Toggles */}
-          <label className="flex items-center gap-1.5 text-sm cursor-pointer dark:text-slate-300 text-slate-600">
-            <input
-              type="checkbox"
-              checked={showShips}
-              onChange={(e) => setShowShips(e.target.checked)}
-              className="rounded dark:border-slate-600 border-slate-300"
-            />
-            Ships
-          </label>
+          {/* Board visibility toggles */}
           <label className="flex items-center gap-1.5 text-sm cursor-pointer dark:text-slate-300 text-slate-600">
             <input
               type="checkbox"
@@ -237,13 +232,11 @@ export default function GameAnalysis({ notation, onExit }: GameAnalysisProps) {
             <AnalysisBoard
               grid={boardState.player1Grid}
               title={`${parsed.player1Name}'s Fleet`}
-              showShips={showShips}
               visible={showP1Board}
             />
             <AnalysisBoard
               grid={boardState.player2Grid}
               title={`${parsed.player2Name}'s Fleet`}
-              showShips={showShips}
               visible={showP2Board}
             />
           </div>
